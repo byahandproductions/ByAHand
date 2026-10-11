@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>By A Hand - Luxury Apparel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#0F051D;color:#F3E8FF}
+.cz{font-family:Cinzel,serif}
+.g{background:linear-gradient(135deg,#EC4899,#F9A8D4,#DB2777);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.btn{background:linear-gradient(135deg,#EC4899,#DB2777);color:#fff;font-weight:600;border-radius:.75rem;padding:.6rem 1rem;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase}
+.btn:hover{box-shadow:0 0 20px #EC489999}
+.btn2{border:1px solid #3B185F;border-radius:.75rem;padding:.5rem .9rem;font-size:.75rem}
+.btn2:hover{border-color:#EC4899}
+.in{width:100%;background:#0008;border:1px solid #3B185F;border-radius:.75rem;padding:.7rem 1rem;color:#fff}
+.in:focus{outline:none;border-color:#EC4899}
+.card{background:#1A0B2E;border:1px solid #3B185F;border-radius:1.25rem}
+.lb{display:block;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:.25rem}
+.hidden{display:none}
+</style></head>
+<body>
+<header class="sticky top-0 z-40 bg-[#0F051D]/90 backdrop-blur border-b border-[#3B185F]">
+ <div id="hdr" class="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between"></div>
+</header>
+<main id="app" class="max-w-6xl mx-auto px-4 py-10 min-h-[70vh]"></main>
+<footer class="border-t border-[#3B185F] py-8 text-center text-xs text-gray-500">&copy; 2026 By A Hand. Fulfilled by Zink Print.</footer>
+
+<div id="cart" class="hidden fixed inset-0 z-50 bg-black/80 flex justify-end"><div id="cartBox" class="card w-full max-w-md h-full p-6 overflow-y-auto"></div></div>
+<div id="auth" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
+ <div class="card w-full max-w-md p-6 space-y-3 my-6">
+  <div class="flex justify-between"><h3 id="aT" class="cz text-xl g">Sign In</h3><button onclick="$('auth').classList.add('hidden')">✕</button></div>
+  <div id="aReg" class="hidden space-y-3">
+   <div><label class="lb">Full name</label><input id="aName" class="in"></div>
+   <div><label class="lb">Phone</label><input id="aPhone" type="tel" class="in" placeholder="+20 100 000 0000"></div>
+   <div><label class="lb">Governorate</label><select id="aGov" class="in"><option value="">Select governorate</option></select></div>
+   <div><label class="lb">City / District</label><input id="aCity" class="in" placeholder="e.g. Nasr City"></div>
+   <div><label class="lb">Street, building, apartment</label><textarea id="aAddr" rows="2" class="in"></textarea></div>
+  </div>
+  <div><label class="lb">Email</label><input id="aEmail" type="email" class="in"></div>
+  <div><label class="lb">Password (6+ characters)</label><input id="aPass" type="password" class="in"></div>
+  <button id="aGo" class="btn w-full py-3" onclick="authGo()">Sign In</button>
+  <button id="aSw" class="text-xs text-gray-400 w-full" onclick="authMode(mode=='in'?'reg':'in')">New here? Register</button>
+ </div>
+</div>
+<div id="toast" class="fixed bottom-6 left-6 z-50 space-y-2"></div>
+
+<script>
+/* ===== 1. PASTE YOUR FIREBASE CONFIG (Project settings > Your apps > Web) ===== */
+const FB={apiKey:"AIzaSyBTLrXRUyVqjRBZndUBXwul_3K8_K7FeyE",authDomain:"byahand-89b4e.firebaseapp.com",projectId:"byahand-89b4e",storageBucket:"byahand-89b4e.firebasestorage.app",appId:"1:1003230017206:web:ed83341bd5fb97444ad817"};
+firebase.initializeApp(FB);
+const auth=firebase.auth(),db=firebase.firestore();
+const GOV=['Cairo','Giza','Alexandria','Qalyubia','Port Said','Suez','Damietta','Dakahlia','Sharqia','Gharbia','Monufia','Kafr El Sheikh','Beheira','Ismailia','Beni Suef','Fayoum','Minya','Asyut','Sohag','Qena','Luxor','Aswan','Red Sea','New Valley','Matrouh','North Sinai','South Sinai'];
+const FALL="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%231A0B2E'/><text x='100' y='135' font-size='100' fill='%23EC4899' text-anchor='middle'>B</text></svg>";
+const LBL={pending:'Awaiting admin verification',approved:'Payment approved - preparing your order',sent_to_zink:'In production at Zink Print',rejected:'Payment rejected'};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const bad=e=>{e.onerror=null;e.src=FALL};
+const im=(s,c)=>`<img src="${esc(s||FALL)}" class="${c}" onerror="bad(this)">`;
+let S={user:null,profile:null,admin:false,site:{},products:[],orders:[],view:'shop',cart:JSON.parse(localStorage.getItem('bah_cart')||'[]')},unsubO=null,mode='in';
+
+function toast(m,err){const d=document.createElement('div');d.className='px-4 py-3 rounded-xl text-sm border '+(err?'bg-red-950 border-red-500 text-red-200':'bg-[#1A0B2E] border-pink-500 text-pink-300');d.textContent=m;$('toast').appendChild(d);setTimeout(()=>d.remove(),3500)}
+function up(f,p,max=700){return new Promise((ok,no)=>{const i=new Image,u=URL.createObjectURL(f);i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.72))};i.onerror=()=>no(new Error('Could not read this image'));i.src=u})}
+const save=()=>localStorage.setItem('bah_cart',JSON.stringify(S.cart));
+const go=v=>{if(['checkout','orders','admin'].includes(v)&&!S.user){authOpen('in');return}if(v=='admin'&&!S.admin)return;S.view=v;$('cart').classList.add('hidden');render();scrollTo(0,0)};
+
+/* ===== live shared data ===== */
+db.doc('settings/site').onSnapshot(s=>{S.site=s.data()||{};render()});
+db.collection('products').onSnapshot(s=>{S.products=s.docs.map(d=>({id:d.id,...d.data()}));render()});
+auth.onAuthStateChanged(async u=>{
+ S.user=u;S.admin=false;S.profile=null;S.orders=[];if(unsubO)unsubO();
+ if(u){
+  S.profile=(await db.doc('users/'+u.uid).get()).data()||{};
+  try{S.admin=(await db.doc('admins/'+u.uid).get()).exists}catch(e){}
+  const q=S.admin?db.collection('orders'):db.collection('orders').where('uid','==',u.uid);
+  unsubO=q.onSnapshot(s=>{S.orders=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));render()},e=>console.error(e));
+ }else if(['checkout','orders','admin'].includes(S.view))S.view='shop';
+ render();
+});
+
+/* ===== views ===== */
+function render(){
+ $('hdr').innerHTML=`<div class="flex items-center gap-3 cursor-pointer" onclick="go('shop')">
+  <div class="w-12 h-12 rounded-full border border-pink-500 overflow-hidden">${im(S.site.logoUrl,'w-full h-full object-cover')}</div>
+  <div><div class="cz text-xl font-bold tracking-widest g">BY A HAND</div><div class="text-[10px] tracking-[.2em] text-gray-400 uppercase">Powered by Zink Print</div></div></div>
+  <div class="flex items-center gap-2 text-xs">
+   ${S.user?`<button class="btn2 hidden sm:block" onclick="go('orders')">My Orders</button>`:''}
+   ${S.admin?`<button class="btn2 text-pink-400 font-bold" onclick="go('admin')">Admin</button>`:''}
+   <button class="btn2" onclick="cartOpen()">Bag (${S.cart.length})</button>
+   ${S.user?`<button class="btn2" onclick="auth.signOut()">Sign out</button>`:`<button class="btn" onclick="authOpen('in')">Sign in</button>`}
+  </div>`;
+ $('app').innerHTML={shop,checkout,orders,admin}[S.view]();
+}
+
+function shop(){
+ if(!S.products.length)return `<div class="card p-16 text-center max-w-xl mx-auto"><h2 class="cz text-3xl text-white">No items yet</h2>${S.admin?'<p class="text-sm text-gray-400 mt-2">Add products from the Admin dashboard.</p>':''}</div>`;
+ return `<h1 class="cz text-4xl g text-center mb-10">THE COLLECTION</h1><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">${S.products.map(p=>`
+ <div class="card overflow-hidden flex flex-col">${im(p.image,'aspect-square object-cover w-full')}
+  <div class="p-4 flex-1"><div class="text-[10px] uppercase tracking-widest text-pink-400">${esc(p.category)}</div><h3 class="cz font-bold text-white">${esc(p.name)}</h3><p class="text-xs text-gray-400 mt-1">${esc(p.description)}</p></div>
+  <div class="p-4 pt-0 flex items-center gap-2"><span class="cz text-pink-400 font-bold flex-1">EGP ${(+p.price).toLocaleString()}</span>
+   <select id="s_${p.id}" class="in !w-auto !py-2 text-xs">${['S','M','L','XL'].map(s=>`<option>${s}</option>`).join('')}</select>
+   <button class="btn" onclick="addCart('${p.id}')">Add</button></div></div>`).join('')}</div>`;
+}
+
+function checkout(){
+ const t=S.cart.reduce((a,i)=>a+i.price,0),p=S.profile||{};
+ if(!S.cart.length)return `<div class="card p-12 text-center">Your bag is empty.</div>`;
+ return `<h1 class="cz text-3xl g mb-6">CHECKOUT</h1><div class="grid md:grid-cols-2 gap-6">
+ <div class="card p-6 space-y-3"><h3 class="cz text-white">1. Delivery</h3>
+  <div><label class="lb">Name</label><input id="cN" class="in" value="${esc(p.name)}"></div>
+  <div><label class="lb">Phone</label><input id="cP" class="in" value="${esc(p.phone)}"></div>
+  <div><label class="lb">Governorate</label><select id="cG" class="in">${GOV.map(g=>`<option ${g==p.governorate?'selected':''}>${g}</option>`).join('')}</select></div>
+  <div><label class="lb">City / District</label><input id="cC" class="in" value="${esc(p.city)}"></div>
+  <div><label class="lb">Address</label><textarea id="cA" rows="2" class="in">${esc(p.address)}</textarea></div></div>
+ <div class="card p-6 space-y-3 text-center"><h3 class="cz text-white text-left">2. Pay with InstaPay</h3>
+  ${S.site.qrUrl?`<img src="${esc(S.site.qrUrl)}" class="w-52 h-52 mx-auto rounded-xl bg-white p-2" onerror="bad(this)">`:'<p class="text-xs text-gray-400">Payment QR not set up yet.</p>'}
+  <p class="text-sm">Scan with the InstaPay app and send exactly <b class="text-pink-400">EGP ${t.toLocaleString()}</b></p>
+  <div class="text-left"><label class="lb">InstaPay reference</label><input id="cR" class="in"></div>
+  <div class="text-left"><label class="lb">Screenshot of the transfer</label><input id="cF" type="file" accept="image/*" class="text-xs"></div>
+  <p class="text-[11px] text-gray-400">The admin checks your transfer against your cart total. Production starts once it is approved.</p>
+  <button id="cB" class="btn w-full py-3" onclick="placeOrder()">Submit order · EGP ${t.toLocaleString()}</button></div></div>`;
+}
+
+const when=o=>o.createdAt?o.createdAt.toDate().toLocaleString():'';
+function orders(){
+ if(!S.orders.length)return `<div class="card p-12 text-center">No orders yet.</div>`;
+ return `<h1 class="cz text-3xl g mb-6">MY ORDERS</h1><div class="space-y-4">${S.orders.map(o=>`<div class="card p-5"><div class="flex justify-between flex-wrap gap-2"><span class="font-mono text-xs text-pink-400">${o.id}</span><span class="text-xs px-3 py-1 rounded-full border border-pink-500/40">${LBL[o.status]||o.status}</span></div>
+ <p class="text-xs text-gray-400 mt-2">${when(o)} · EGP ${(+o.total).toLocaleString()}</p>
+ ${o.items.map(i=>`<p class="text-sm">• ${esc(i.name)} (${esc(i.size)})</p>`).join('')}</div>`).join('')}</div>`;
+}
+
+function admin(){
+ return `<h1 class="cz text-3xl g mb-6">ADMIN DASHBOARD</h1><div class="grid md:grid-cols-2 gap-6 mb-6">
+ <div class="card p-5 space-y-2"><h3 class="cz text-white">Brand logo</h3><div class="flex items-center gap-4">${im(S.site.logoUrl,'w-16 h-16 rounded-full object-cover border border-pink-500')}<input type="file" accept="image/*" class="text-xs" onchange="setSite(event,'logoUrl','site')"></div><p class="text-xs text-gray-500">Saved online - visible to every visitor.</p></div>
+ <div class="card p-5 space-y-2"><h3 class="cz text-white">InstaPay QR code</h3><div class="flex items-center gap-4">${S.site.qrUrl?im(S.site.qrUrl,'w-16 h-16 bg-white rounded p-1'):''}<input type="file" accept="image/*" class="text-xs" onchange="setSite(event,'qrUrl','site')"></div></div></div>
+ <div class="card p-5 mb-6"><h3 class="cz text-white mb-3" id="pT">Add product</h3><input type="hidden" id="pId"><div class="grid sm:grid-cols-2 gap-3">
+  <input id="pN" class="in" placeholder="Name"><input id="pP" type="number" class="in" placeholder="Price EGP"><input id="pC" class="in" placeholder="Category"><input id="pS" class="in font-mono" placeholder="Zink Print SKU">
+  <textarea id="pD" class="in sm:col-span-2" rows="2" placeholder="Description"></textarea><input id="pI" type="file" accept="image/*" class="text-xs"><button class="btn" onclick="saveProd()">Save product</button></div></div>
+ <div class="card p-5 mb-6 overflow-x-auto"><h3 class="cz text-white mb-3">Products</h3><table class="w-full text-sm">${S.products.map(p=>`<tr class="border-t border-[#3B185F]"><td class="py-2">${im(p.image,'w-10 h-10 rounded object-cover')}</td><td>${esc(p.name)}</td><td class="text-pink-400">${p.price}</td><td class="font-mono text-xs">${esc(p.zinkSKU)}</td><td class="text-right"><button class="btn2" onclick="editProd('${p.id}')">Edit</button> <button class="btn2 text-red-400" onclick="delProd('${p.id}')">Delete</button></td></tr>`).join('')}</table></div>
+ <div class="card p-5"><h3 class="cz text-white mb-3">Orders</h3><div class="space-y-3">${S.orders.map(o=>`<div class="p-4 rounded-xl bg-black/40 border border-[#3B185F] text-sm space-y-1">
+  <div class="flex justify-between flex-wrap gap-2"><span class="font-mono text-xs text-pink-400">${o.id}</span><span class="text-xs">${LBL[o.status]||o.status}</span></div>
+  <div><b>${esc(o.customer.name)}</b> · ${esc(o.customer.phone)} · ${when(o)}</div>
+  <div class="text-xs text-gray-400">${esc(o.customer.governorate)}, ${esc(o.customer.city)}, ${esc(o.customer.address)}</div>
+  <div>Cart total to receive: <b class="text-pink-400">EGP ${(+o.total).toLocaleString()}</b> · Ref: <span class="font-mono">${esc(o.instaRef)}</span> · </div><img src="${esc(o.receiptUrl)}" class="w-40 rounded cursor-zoom-in" onclick="this.classList.toggle('w-40');this.classList.toggle('w-full')" title="Click to enlarge">
+  <div class="text-xs text-gray-400">${o.items.map(i=>esc(i.name)+' ('+esc(i.size)+', SKU '+esc(i.sku)+')').join(', ')}</div>
+  ${o.status=='pending'?`<div class="flex gap-2 pt-1"><button class="btn" onclick="setStatus('${o.id}','approved')">Payment received - approve</button><button class="btn2 text-red-400" onclick="if(confirm('Reject this payment?'))setStatus('${o.id}','rejected')">Reject</button></div>`:''}
+  ${o.status=='approved'?`<div class="pt-1"><p class="text-xs text-gray-400 mb-1">Now place this order in your Zink Print dashboard, then mark it:</p><button class="btn" onclick="setStatus('${o.id}','sent_to_zink')">Mark as sent to Zink Print</button></div>`:''}
+  </div>`).join('')||'<p class="text-gray-500 text-sm">No orders yet.</p>'}</div></div>`;
+}
+
+/* ===== actions ===== */
+function addCart(id){const p=S.products.find(x=>x.id==id);S.cart.push({pid:id,name:p.name,price:+p.price,size:$('s_'+id).value,sku:p.zinkSKU,image:p.image,k:Math.random()});save();cartOpen()}
+function cartOpen(){const t=S.cart.reduce((a,i)=>a+i.price,0);
+ $('cartBox').innerHTML=`<div class="flex justify-between mb-4"><h3 class="cz g text-xl">YOUR BAG</h3><button onclick="$('cart').classList.add('hidden')">✕</button></div>
+ ${S.cart.map(i=>`<div class="flex items-center gap-3 py-3 border-t border-[#3B185F]">${im(i.image,'w-14 h-14 rounded object-cover')}<div class="flex-1 text-sm"><b>${esc(i.name)}</b><div class="text-xs text-gray-400">${i.size} · EGP ${i.price}</div></div><button onclick="S.cart=S.cart.filter(x=>x.k!=${i.k});save();cartOpen();render()">🗑</button></div>`).join('')||'<p class="text-gray-500 text-sm">Your bag is empty.</p>'}
+ <div class="flex justify-between font-bold my-4"><span>Total</span><span class="text-pink-400">EGP ${t.toLocaleString()}</span></div>
+ <button class="btn w-full py-3" onclick="go('checkout')">Checkout</button>`;
+ $('cart').classList.remove('hidden');render()}
+
+function authOpen(m){authMode(m);$('auth').classList.remove('hidden')}
+function authMode(m){mode=m;const r=m=='reg';$('aReg').classList.toggle('hidden',!r);$('aT').textContent=r?'Create Account':'Sign In';$('aGo').textContent=r?'Register':'Sign In';$('aSw').textContent=r?'Have an account? Sign in':'New here? Register'}
+async function authGo(){
+ const e=$('aEmail').value.trim(),p=$('aPass').value;
+ try{
+  if(mode=='reg'){
+   const d={name:$('aName').value.trim(),phone:$('aPhone').value.trim(),governorate:$('aGov').value,city:$('aCity').value.trim(),address:$('aAddr').value.trim(),email:e};
+   if(!d.name||!d.governorate||!d.city||!d.address)return toast('Please fill name, governorate, city and address','e');
+   const c=await auth.createUserWithEmailAndPassword(e,p);await db.doc('users/'+c.user.uid).set(d);S.profile=d;
+  }else await auth.signInWithEmailAndPassword(e,p);
+  $('auth').classList.add('hidden');toast('Welcome!')
+ }catch(x){toast(x.message,'e')}
+}
+
+async function placeOrder(){
+ const f=$('cF').files[0],v=id=>$(id).value.trim();
+ if(!v('cN')||!v('cP')||!v('cC')||!v('cA')||v('cR').length<4||!f)return toast('Fill all fields, add the reference and the transfer screenshot','e');
+ $('cB').disabled=true;
+ try{
+  const customer={name:v('cN'),phone:v('cP'),governorate:$('cG').value,city:v('cC'),address:v('cA'),email:S.user.email};
+  const receiptUrl=await up(f,'r',900);
+  await db.collection('orders').add({uid:S.user.uid,customer,instaRef:v('cR'),receiptUrl,status:'pending',total:S.cart.reduce((a,i)=>a+i.price,0),items:S.cart.map(i=>({pid:i.pid,name:i.name,size:i.size,price:i.price,sku:i.sku||''})),createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  S.cart=[];save();toast('Order submitted - awaiting payment verification');go('orders');
+ }catch(x){toast(x.message,'e');$('cB').disabled=false}
+}
+
+async function setSite(e,k,doc){const f=e.target.files[0];if(!f)return;try{const u=await up(f,'s',k=='qrUrl'?600:300);await db.doc('settings/'+doc).set({[k]:u},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
+async function saveProd(){
+ const id=$('pId').value,old=S.products.find(p=>p.id==id),f=$('pI').files[0];
+ try{
+  const d={name:$('pN').value.trim(),price:+$('pP').value,category:$('pC').value.trim(),zinkSKU:$('pS').value.trim(),description:$('pD').value.trim(),image:old?.image||''};
+  if(!d.name||!d.price||!d.zinkSKU)return toast('Name, price and SKU are required','e');
+  if(f)d.image=await up(f,'p',700);
+  id?await db.doc('products/'+id).set(d):await db.collection('products').add(d);toast('Product saved')
+ }catch(x){toast(x.message,'e')}
+}
+function editProd(id){const p=S.products.find(x=>x.id==id);$('pId').value=id;$('pN').value=p.name;$('pP').value=p.price;$('pC').value=p.category;$('pS').value=p.zinkSKU;$('pD').value=p.description;$('pT').textContent='Edit product';scrollTo(0,300)}
+async function delProd(id){if(confirm('Delete this product?'))await db.doc('products/'+id).delete()}
+async function setStatus(id,v){try{await db.doc('orders/'+id).update({status:v});toast('Updated')}catch(x){toast(x.message,'e')}}
+
+$('aGov').innerHTML+=GOV.map(g=>`<option>${g}</option>`).join('');
+render();
+</script></body></html>
