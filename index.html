@@ -62,6 +62,7 @@ const im=(s,c)=>`<img src="${esc(s||FALL)}" class="${c}" onerror="bad(this)">`;
 const safe=u=>/^https?:\/\//.test(u||'')?u:'#';
 const sum=()=>S.cart.reduce((a,i)=>a+i.price,0);
 const disc=s=>!S.coupon?0:S.coupon.type=='pct'?Math.round(s*S.coupon.value/100):Math.min(S.coupon.value,s);
+const govList=()=>S.site.govs&&S.site.govs.length?S.site.govs:GOV;
 const tot=()=>sum()-disc(sum());
 const skuOf=p=>p.items&&p.items.length?p.items.map(i=>(S.products.find(x=>x.id==i)||{}).zinkSKU).join(' + '):p.zinkSKU;
 let S={user:null,profile:null,admin:false,site:{},products:[],orders:[],view:'shop',cart:JSON.parse(localStorage.getItem('bah_cart')||'[]')},unsubO=null,mode='in';
@@ -75,13 +76,14 @@ const go=v=>{if(['checkout','orders','admin'].includes(v)&&!S.user){authOpen('in
 db.doc('settings/site').onSnapshot(s=>{S.site=s.data()||{};render()});
 db.collection('products').onSnapshot(s=>{S.products=s.docs.map(d=>({id:d.id,...d.data()}));render()});
 auth.onAuthStateChanged(async u=>{
- S.user=u;S.admin=false;S.profile=null;S.orders=[];if(unsubO)unsubO();
+ S.user=u;S.admin=false;S.profile=null;S.orders=[];S.ordersLoaded=false;if(unsubO)unsubO();
  if(u){
   S.profile=(await db.doc('users/'+u.uid).get()).data()||{};
   try{S.admin=(await db.doc('admins/'+u.uid).get()).exists}catch(e){}
+  if((u.email||'').toLowerCase()=='byahandproductions@gmail.com')S.admin=true;
   if(S.admin)db.collection('coupons').onSnapshot(c=>{S.coupons=c.docs.map(d=>({id:d.id,...d.data()}));render()});
   const q=S.admin?db.collection('orders'):db.collection('orders').where('uid','==',u.uid);
-  unsubO=q.onSnapshot(s=>{S.orders=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));render()},e=>console.error(e));
+  unsubO=q.onSnapshot(s=>{if(S.admin&&S.ordersLoaded)s.docChanges().forEach(c=>{if(c.type=='added')toast('🔔 New order from '+c.doc.data().customer.name)});S.ordersLoaded=true;S.orders=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));render()},e=>console.error(e));
  }else if(['checkout','orders','admin'].includes(S.view))S.view='shop';
  render();
 });
@@ -98,6 +100,7 @@ function render(){
    ${S.user?`<button class="btn2" onclick="auth.signOut()">Sign out</button>`:`<button class="btn" onclick="authOpen('in')">Sign in</button>`}
   </div>`;
  $('app').innerHTML={shop,checkout,orders,admin}[S.view]();
+ const gv=$('aGov').value;$('aGov').innerHTML='<option value="">Select governorate</option>'+govList().map(g=>`<option>${g}</option>`).join('');$('aGov').value=gv;
  $('ft').innerHTML=`<div class="flex justify-center gap-5 text-sm">${S.site.insta?`<a class="text-pink-400" target="_blank" rel="noopener" href="${esc(safe(S.site.insta))}">Instagram</a>`:''}${S.site.wa?`<a class="text-pink-400" target="_blank" rel="noopener" href="https://wa.me/${esc(S.site.wa)}">WhatsApp</a>`:''}${S.site.legal?`<button class="underline" onclick="showM('<h3 class=&quot;cz g text-xl mb-3&quot;>Terms &amp; policies</h3><p class=&quot;text-sm whitespace-pre-wrap&quot;>'+esc(S.site.legal).replace(/'/g,'&#39;')+'</p>')">Terms &amp; policies</button>`:''}</div><div>&copy; 2026 By A Hand</div>`;
 }
 
@@ -120,7 +123,7 @@ function checkout(){
  <div class="card p-6 space-y-3"><h3 class="cz text-white">1. Delivery</h3>
   <div><label class="lb">Name</label><input id="cN" class="in" value="${esc(p.name)}"></div>
   <div><label class="lb">Phone</label><input id="cP" class="in" value="${esc(p.phone)}"></div>
-  <div><label class="lb">Governorate</label><select id="cG" class="in">${GOV.map(g=>`<option ${g==p.governorate?'selected':''}>${g}</option>`).join('')}</select></div>
+  <div><label class="lb">Governorate</label><select id="cG" class="in">${govList().map(g=>`<option ${g==p.governorate?'selected':''}>${g}</option>`).join('')}</select></div>
   <div><label class="lb">City / District</label><input id="cC" class="in" value="${esc(p.city)}"></div>
   <div><label class="lb">Address</label><textarea id="cA" rows="2" class="in">${esc(p.address)}</textarea></div></div>
  <div class="card p-6 space-y-3 text-center"><h3 class="cz text-white text-left">2. Pay with InstaPay</h3>
@@ -137,7 +140,7 @@ const when=o=>o.createdAt?o.createdAt.toDate().toLocaleString():'';
 function orders(){
  if(!S.orders.length)return `<div class="card p-12 text-center">No orders yet.</div>`;
  return `<h1 class="cz text-3xl g mb-6">MY ORDERS</h1><div class="space-y-4">${S.orders.map(o=>`<div class="card p-5"><div class="flex justify-between flex-wrap gap-2"><span class="font-mono text-xs text-pink-400">${o.id}</span><span class="text-xs px-3 py-1 rounded-full border border-pink-500/40">${LBL[o.status]||o.status}</span></div>
- <p class="text-xs text-gray-400 mt-2">${when(o)} · EGP ${(+o.total).toLocaleString()}</p>${o.tracking?`<p class="text-xs text-pink-400">Tracking: ${esc(o.tracking)}</p>`:''}
+ <p class="text-xs text-gray-400 mt-2">${when(o)} · EGP ${(+o.total).toLocaleString()}</p>${o.tracking?`<p class="text-xs text-pink-400">Tracking: ${esc(o.tracking)}</p>`:''}<div class="flex gap-1 mt-3">${['Placed','Approved','Production','Shipped','Delivered'].map((n,i)=>`<div class="flex-1 text-center"><div class="h-1.5 rounded ${i<=['pending','approved','sent_to_zink','shipped','delivered'].indexOf(o.status)?'bg-pink-500':'bg-[#3B185F]'}"></div><div class="text-[9px] text-gray-500 mt-1">${n}</div></div>`).join('')}</div>
  ${o.items.map(i=>`<p class="text-sm">• ${esc(i.name)} (${esc(i.size)})</p>`).join('')}</div>`).join('')}</div>`;
 }
 
@@ -145,11 +148,13 @@ function admin(){
  return `<h1 class="cz text-3xl g mb-6">ADMIN DASHBOARD</h1><div class="grid md:grid-cols-2 gap-6 mb-6">
  <div class="card p-5 space-y-2"><h3 class="cz text-white">Brand logo</h3><div class="flex items-center gap-4">${im(S.site.logoUrl,'w-16 h-16 rounded-full object-cover border border-pink-500')}<input type="file" accept="image/*" class="text-xs" onchange="setSite(event,'logoUrl','site')"></div><p class="text-xs text-gray-500">Saved online - visible to every visitor.</p></div>
  <div class="card p-5 space-y-2"><h3 class="cz text-white">InstaPay QR code</h3><div class="flex items-center gap-4">${S.site.qrUrl?im(S.site.qrUrl,'w-16 h-16 bg-white rounded p-1'):''}<input type="file" accept="image/*" class="text-xs" onchange="setSite(event,'qrUrl','site')"></div></div></div>
- <div class="card p-5 mb-6 space-y-3"><h3 class="cz text-white">Website content &amp; links</h3>
+ <div class="card p-5 mb-6"><h3 class="cz text-white mb-1">Delivery areas</h3><p class="text-xs text-gray-400 mb-3">Tick only the governorates Zink Print delivers to (none ticked = all are shown).</p><div class="flex flex-wrap gap-3">${GOV.map(g=>`<label class="text-xs flex gap-1"><input type="checkbox" class="gv" value="${g}" ${(S.site.govs||[]).includes(g)?'checked':''}>${g}</label>`).join('')}</div><button class="btn mt-3" onclick="saveGovs()">Save delivery areas</button></div>
+<div class="card p-5 mb-6 space-y-3"><h3 class="cz text-white">Website content &amp; links</h3>
  <textarea id="sAbout" rows="3" class="in" placeholder="About us text">${esc(S.site.about)}</textarea>
  <div class="grid sm:grid-cols-2 gap-3"><input id="sInsta" class="in" placeholder="Instagram link (https://instagram.com/...)" value="${esc(S.site.insta)}"><input id="sWa" class="in" placeholder="WhatsApp number e.g. 201285374246" value="${esc(S.site.wa)}">
  <input id="sVid" class="in sm:col-span-2" placeholder="YouTube link for the top video" value="${esc((S.site.video||{}).url)}"><input id="sVs" type="number" class="in" placeholder="Clip start (seconds)" value="${(S.site.video||{}).start||''}"><input id="sVe" type="number" class="in" placeholder="Clip end (seconds)" value="${(S.site.video||{}).end||''}">
- <input id="sMax" type="number" class="in" placeholder="Max order amount EGP (empty = no limit)" value="${S.site.maxOrder||''}"></div>
+ <input id="sMax" type="number" class="in" placeholder="Max order amount EGP (empty = no limit)" value="${S.site.maxOrder||''}">
+ <input id="sE1" class="in" placeholder="EmailJS Service ID" value="${esc(S.site.ejsService)}"><input id="sE2" class="in" placeholder="EmailJS Template ID" value="${esc(S.site.ejsTemplate)}"><input id="sE3" class="in sm:col-span-2" placeholder="EmailJS Public Key (order alerts by email)" value="${esc(S.site.ejsKey)}"></div>
  <textarea id="sLegal" rows="3" class="in" placeholder="Terms, refund and privacy policy text">${esc(S.site.legal)}</textarea><button class="btn" onclick="saveSite()">Save website content</button></div>
 <div class="card p-5 mb-6"><h3 class="cz text-white mb-3">Bundles</h3><div class="grid sm:grid-cols-2 gap-3"><input id="bN" class="in" placeholder="Bundle name"><input id="bP" type="number" class="in" placeholder="Bundle price EGP"><textarea id="bD" class="in sm:col-span-2" rows="2" placeholder="Description"></textarea>
  <div class="sm:col-span-2 flex flex-wrap gap-3">${S.products.filter(p=>!(p.items&&p.items.length)).map(p=>`<label class="text-xs flex gap-1"><input type="checkbox" class="bc" value="${p.id}">${esc(p.name)}</label>`).join('')}</div><input id="bI" type="file" accept="image/*" class="text-xs"><button class="btn" onclick="saveBundle()">Save bundle</button></div></div>
@@ -161,8 +166,8 @@ function admin(){
  <div class="card p-5"><h3 class="cz text-white mb-3">Orders</h3><div class="space-y-3">${S.orders.map(o=>`<div class="p-4 rounded-xl bg-black/40 border border-[#3B185F] text-sm space-y-1">
   <div class="flex justify-between flex-wrap gap-2"><span class="font-mono text-xs text-pink-400">${o.id}</span><span class="text-xs">${LBL[o.status]||o.status}</span></div>
   <div><b>${esc(o.customer.name)}</b> · ${esc(o.customer.phone)} · ${when(o)}</div>
-  <div class="text-xs text-gray-400">${esc(o.customer.governorate)}, ${esc(o.customer.city)}, ${esc(o.customer.address)}</div>
-  <div>Cart total to receive: <b class="text-pink-400">EGP ${(+o.total).toLocaleString()}</b> · Ref: <span class="font-mono">${esc(o.instaRef)}</span> · </div><img src="${esc(o.receiptUrl)}" class="w-40 rounded cursor-zoom-in" onclick="this.classList.toggle('w-40');this.classList.toggle('w-full')" title="Click to enlarge">
+  <div class="text-xs text-gray-400">${esc(o.customer.governorate)}, ${esc(o.customer.city)}, ${esc(o.customer.address)} <button class="btn2 ml-2" onclick="copyAddr('${o.id}')">Copy delivery details</button></div>
+  <div>Cart total to receive: <b class="text-pink-400">EGP ${(+o.total).toLocaleString()}</b> · Ref: <span class="font-mono">${esc(o.instaRef)}</span>${S.orders.filter(x=>x.instaRef==o.instaRef).length>1?' <b class="text-red-400">⚠ same reference used on another order</b>':''}</div><img src="${esc(o.receiptUrl)}" class="w-40 rounded cursor-zoom-in" onclick="this.classList.toggle('w-40');this.classList.toggle('w-full')" title="Click to enlarge">
   <div class="text-xs text-gray-400">${o.items.map(i=>esc(i.name)+' ('+esc(i.size)+', SKU '+esc(i.sku)+')').join(', ')}</div>
   ${o.status=='pending'?`<div class="flex gap-2 pt-1"><button class="btn" onclick="setStatus('${o.id}','approved')">Payment received - approve</button><button class="btn2 text-red-400" onclick="if(confirm('Reject this payment?'))setStatus('${o.id}','rejected')">Reject</button></div>`:''}
   ${o.status=='approved'?`<div class="pt-1"><p class="text-xs text-gray-400 mb-1">Now place this order in your Zink Print dashboard, then mark it:</p><button class="btn" onclick="setStatus('${o.id}','sent_to_zink')">Mark as sent to Zink Print</button></div>`:''}
@@ -203,6 +208,7 @@ async function placeOrder(){
   const customer={name:v('cN'),phone:v('cP'),governorate:$('cG').value,city:v('cC'),address:v('cA'),email:S.user.email};
   const receiptUrl=await up(f,'r',900);
   await db.collection('orders').add({uid:S.user.uid,customer,instaRef:v('cR'),receiptUrl,status:'pending',total:tot(),coupon:S.coupon?S.coupon.code:null,discount:disc(sum()),items:S.cart.map(i=>({pid:i.pid,name:i.name,size:i.size,price:i.price,sku:i.sku||''})),createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  if(S.site.ejsKey)fetch('https://api.emailjs.com/api/v1.0/email/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_id:S.site.ejsService,template_id:S.site.ejsTemplate,user_id:S.site.ejsKey,template_params:{title:'New order - EGP '+tot(),name:customer.name,email:S.user.email,time:new Date().toLocaleString(),message:'Phone: '+customer.phone+' | Address: '+customer.governorate+', '+customer.city+', '+customer.address+' | Items: '+S.cart.map(i=>i.name+' ('+i.size+')').join(', ')+' | Total: EGP '+tot()+' | InstaPay reference: '+v('cR')}})}).catch(()=>{});
   S.cart=[];save();toast('Order submitted - awaiting payment verification');go('orders');
  }catch(x){toast(x.message,'e');$('cB').disabled=false}
 }
@@ -227,9 +233,11 @@ function openP(id){const p=S.products.find(x=>x.id==id);if(!p)return;showM(`<div
 async function applyCoupon(){const c=$('cc').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(!c)return;try{const d=await db.doc('coupons/'+c).get();if(!d.exists||!d.data().active)return toast('Invalid coupon','e');S.coupon={code:c,...d.data()};toast('Coupon applied');render()}catch(x){toast('Invalid coupon','e')}}
 async function addCoupon(){const c=$('kC').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(!c||!+$('kV').value)return toast('Code and value needed','e');try{await db.doc('coupons/'+c).set({type:$('kT').value,value:+$('kV').value,active:true});toast('Coupon added')}catch(x){toast(x.message,'e')}}
 async function delCoupon(c){if(confirm('Delete coupon?'))await db.doc('coupons/'+c).delete()}
-async function saveSite(){const u=$('sVid').value.trim(),m=u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);try{await db.doc('settings/site').set({about:$('sAbout').value,insta:$('sInsta').value.trim(),wa:$('sWa').value.replace(/\D/g,''),legal:$('sLegal').value,maxOrder:+$('sMax').value||0,video:{id:m?m[1]:'',url:u,start:+$('sVs').value||0,end:+$('sVe').value||0}},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
+async function saveSite(){const u=$('sVid').value.trim(),m=u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);try{await db.doc('settings/site').set({about:$('sAbout').value,insta:$('sInsta').value.trim(),wa:$('sWa').value.replace(/\D/g,''),legal:$('sLegal').value,maxOrder:+$('sMax').value||0,ejsService:$('sE1').value.trim(),ejsTemplate:$('sE2').value.trim(),ejsKey:$('sE3').value.trim(),video:{id:m?m[1]:'',url:u,start:+$('sVs').value||0,end:+$('sVe').value||0}},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
 async function saveBundle(){const f=$('bI').files[0],items=[...document.querySelectorAll('.bc:checked')].map(c=>c.value);if(!$('bN').value.trim()||!+$('bP').value||items.length<2)return toast('Name, price and at least 2 products needed','e');try{await db.collection('products').add({name:$('bN').value.trim(),price:+$('bP').value,category:'Bundle',description:$('bD').value.trim(),zinkSKU:'',items,image:f?await up(f,'p',700):''});toast('Bundle saved')}catch(x){toast(x.message,'e')}}
+async function saveGovs(){const g=[...document.querySelectorAll('.gv:checked')].map(c=>c.value);try{await db.doc('settings/site').set({govs:g},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
+function copyAddr(id){const o=S.orders.find(x=>x.id==id),c=o.customer;navigator.clipboard.writeText(c.name+'\n'+c.phone+'\n'+c.governorate+', '+c.city+', '+c.address).then(()=>toast('Copied'))}
 async function setShip(id){const t=prompt('Tracking number or courier note (optional)');if(t===null)return;try{await db.doc('orders/'+id).update({status:'shipped',tracking:t.trim()});toast('Updated')}catch(x){toast(x.message,'e')}}
-$('aGov').innerHTML+=GOV.map(g=>`<option>${g}</option>`).join('');
+
 render();
 </script></body></html>
