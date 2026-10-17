@@ -19,6 +19,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#0F051D;color:#F3E8FF
 .card{background:#1A0B2E;border:1px solid #3B185F;border-radius:1.25rem}
 .lb{display:block;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:.25rem}
 .hidden{display:none}
+.fcb{width:3rem;height:3rem;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;color:#fff;box-shadow:0 8px 20px #0008}
 </style></head>
 <body>
 <header class="sticky top-0 z-40 bg-[#0F051D]/90 backdrop-blur border-b border-[#3B185F]">
@@ -33,7 +34,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#0F051D;color:#F3E8FF
   <div class="flex justify-between"><h3 id="aT" class="cz text-xl g">Sign In</h3><button onclick="$('auth').classList.add('hidden')">✕</button></div>
   <div id="aReg" class="hidden space-y-3">
    <div><label class="lb">Full name</label><input id="aName" class="in"></div>
-   <div><label class="lb">Phone</label><input id="aPhone" type="tel" class="in" placeholder="+20 100 000 0000"></div>
+   <div><label class="lb">Phone</label><input id="aPhone" type="tel" class="in" placeholder="Phone number"></div>
    <div><label class="lb">Governorate</label><select id="aGov" class="in"><option value="">Select governorate</option></select></div>
    <div><label class="lb">City / District</label><input id="aCity" class="in" placeholder="e.g. Nasr City"></div>
    <div><label class="lb">Street, building, apartment</label><textarea id="aAddr" rows="2" class="in"></textarea></div>
@@ -45,6 +46,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#0F051D;color:#F3E8FF
  </div>
 </div>
 <div id="pm" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target==this)this.classList.add('hidden')"><div id="pmb" class="card w-full max-w-3xl p-6 relative my-6"></div></div>
+<div id="sd" class="hidden fixed inset-0 z-50 bg-black/60" onclick="if(event.target==this)side(0)"><div id="sdb" class="card h-full w-72 p-6 !rounded-none overflow-y-auto"></div></div>
+<div id="fc" class="fixed bottom-6 right-6 z-40 flex flex-col gap-3"></div>
+<datalist id="mdl"></datalist>
 <div id="toast" class="fixed bottom-6 left-6 z-50 space-y-2"></div>
 
 <script>
@@ -59,6 +63,12 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const bad=e=>{e.onerror=null;e.src=FALL};
 const im=(s,c)=>`<img src="${esc(s||FALL)}" class="${c}" onerror="bad(this)">`;
+const MODELS=[...new Set("other|iPhone 16 Pro Max|iPhone 16 Pro|iPhone 16|iPhone 14 Pro|iPhone 13 Pro|iPhone 13 mini|iPhone 13|iPhone 12 Pro Max|iPhone 12 Pro|iPhone 12 mini|iPhone 11 Pro Max|iPhone 11 Pro|iPhone 11|iPhone X/XS|iPhone 7+|iPhone 7|iPhone 6+|iPhone 6|Samsung Galaxy S10|Samsung Galaxy S10 Lite|Samsung Galaxy S9 Plus|Samsung Note 4|Samsung Note 9|Samsung Note 10 Lite|Samsung Note 10 Pro/10+|Samsung Note 20 Ultra|Samsung Note 20 Plus|Samsung S20|Samsung S20 Plus|Samsung S20 FE|Samsung S20 Ultra|Samsung S21/S30|Samsung S21 Plus|Samsung S22 Ultra|Samsung S23|Samsung S23 Ultra|Samsung A02/M02|Samsung A022/M02S|Samsung A03s|Samsung A04|Samsung A05s|Samsung A12/M12|Samsung A13 4G|Samsung A14|Samsung A15|Samsung A20/A30/M10s|Samsung A20s|Samsung A21|Samsung A21s|Samsung A22 4G|Samsung A22 5G|Samsung A23|Samsung A24|Samsung A30s|Samsung A31/A8|Samsung A32 4G|Samsung A32 5G|Samsung A33|Samsung A35 5G|Samsung A51/M40s|Samsung A52|Samsung A53|Samsung A54|Samsung A70/A70s|Samsung A80|Samsung M11|Samsung M30s|Samsung M31|Samsung M33 5G|Samsung M51|Samsung M52|Samsung M53|Redmi 9|Redmi 9T|Redmi 10|Redmi 10C|Redmi 12|Redmi Note 8|Redmi Note 8 Pro|Redmi Note 9|Redmi Note 9S|Redmi Note 10 Pro|Redmi Note 10 5G|Redmi Note 10S|Redmi Note 11 5G|Redmi Note 11 Pro 5G/4G|Redmi Note 11S 4G|Redmi Note 11 T5G|Redmi Note 13|Xiaomi Redmi Note 7/7 Pro/Mi Note 7|Xiaomi Redmi Note 9|Xiaomi Note 9s/9 Pro|Xiaomi Note 8|Xiaomi HM Note 9S/9 Pro Max/Note 10 Lite|Xiaomi HM Note 10 Pro 5G|Xiaomi HM Note 11 5G|Xiaomi HM Note 11 4G|Xiaomi Mi 11T|Xiaomi Mi 12T|Xiaomi 9T/9T Pro|Mi Note 10 Lite|Huawei Nova 2i/Mate 10 Lite/Honor 9i|Huawei Nova 7|Huawei Honor 20 Pro|Huawei Honor 50 Lite/X20/Nova 8i|Huawei Honor 20/Nova 5T|Huawei Honor 20 Lite|Huawei Honor Play|Huawei Honor 8X|Huawei Mate 20 Pro|Realme 7|Realme 7 Pro|Realme 8|Realme 8 Pro|Realme 10|Realme 11|Realme C15/C12/C25|Realme C21|Realme C53|Realme 9i/Oppo A76/A36|Oppo F7|Oppo F11|Oppo A57|Oppo A52|Oppo A54 4G/A55 5G|Oppo A73/F17|Oppo A75|Oppo A80|Oppo A92/A72/A52|Oppo A93/Reno 4 Lite/F17 Pro/Reno 2F|Oppo Reno 2|Oppo Reno 2F/2Z|Oppo Reno 3|Oppo Reno 4 Pro|Oppo Reno 5|Oppo Reno 5 4G/5G|Oppo Reno 5 Pro|Oppo Reno 6 5G|Oppo Reno 8T 4G|Oppo Reno 10 5G".split('|'))];
+const isCase=p=>/case/i.test(p.category||'');
+const pick=(p,id)=>isCase(p)?`<input id="${id}" list="mdl" class="in !w-auto !py-2 text-xs" placeholder="Search phone model" style="min-width:9rem">`:`<select id="${id}" class="in !w-auto !py-2 text-xs">${['S','M','L','XL'].map(z=>`<option>${z}</option>`).join('')}</select>`;
+const rt=id=>{const a=(S.ratings||[]).filter(x=>x.pid==id);if(!a.length)return '';const m=a.reduce((t,x)=>t+x.stars,0)/a.length,k=Math.round(m);return `<div class="text-pink-400 text-sm">${'★'.repeat(k)}${'☆'.repeat(5-k)} <span class="text-xs text-gray-500">${m.toFixed(1)} (${a.length})</span></div>`};
+const canRate=id=>S.user&&S.orders.some(o=>o.status=='delivered'&&o.items.some(i=>i.pid==id));
+const myRate=id=>((S.ratings||[]).find(x=>x.pid==id&&S.user&&x.uid==S.user.uid)||{}).stars||0;
 const safe=u=>/^https?:\/\//.test(u||'')?u:'#';
 const sum=()=>S.cart.reduce((a,i)=>a+i.price,0);
 const disc=s=>!S.coupon?0:S.coupon.type=='pct'?Math.round(s*S.coupon.value/100):Math.min(S.coupon.value,s);
@@ -70,10 +80,11 @@ let S={user:null,profile:null,admin:false,site:{},products:[],orders:[],view:'sh
 function toast(m,err){const d=document.createElement('div');d.className='px-4 py-3 rounded-xl text-sm border '+(err?'bg-red-950 border-red-500 text-red-200':'bg-[#1A0B2E] border-pink-500 text-pink-300');d.textContent=m;$('toast').appendChild(d);setTimeout(()=>d.remove(),3500)}
 function up(f,p,max=700){return new Promise((ok,no)=>{const i=new Image,u=URL.createObjectURL(f);i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.72))};i.onerror=()=>no(new Error('Could not read this image'));i.src=u})}
 const save=()=>localStorage.setItem('bah_cart',JSON.stringify(S.cart));
-const go=v=>{if(['checkout','orders','admin'].includes(v)&&!S.user){authOpen('in');return}if(v=='admin'&&!S.admin)return;S.view=v;$('cart').classList.add('hidden');render();scrollTo(0,0)};
+const go=v=>{if(['checkout','orders','admin','account'].includes(v)&&!S.user){authOpen('in');return}if(v=='admin'&&!S.admin)return;S.view=v;$('cart').classList.add('hidden');render();scrollTo(0,0)};
 
 /* ===== live shared data ===== */
 db.doc('settings/site').onSnapshot(s=>{S.site=s.data()||{};render()});
+db.collection('ratings').onSnapshot(s=>{S.ratings=s.docs.map(d=>d.data());render()});
 db.collection('products').onSnapshot(s=>{S.products=s.docs.map(d=>({id:d.id,...d.data()}));render()});
 auth.onAuthStateChanged(async u=>{
  S.user=u;S.admin=false;S.profile=null;S.orders=[];S.ordersLoaded=false;if(unsubO)unsubO();
@@ -84,23 +95,24 @@ auth.onAuthStateChanged(async u=>{
   if(S.admin)db.collection('coupons').onSnapshot(c=>{S.coupons=c.docs.map(d=>({id:d.id,...d.data()}));render()});
   const q=S.admin?db.collection('orders'):db.collection('orders').where('uid','==',u.uid);
   unsubO=q.onSnapshot(s=>{if(S.admin&&S.ordersLoaded)s.docChanges().forEach(c=>{if(c.type=='added')toast('🔔 New order from '+c.doc.data().customer.name)});S.ordersLoaded=true;S.orders=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));render()},e=>console.error(e));
- }else if(['checkout','orders','admin'].includes(S.view))S.view='shop';
+ }else if(['checkout','orders','admin','account'].includes(S.view))S.view='shop';
  render();
 });
 
 /* ===== views ===== */
 function render(){
- $('hdr').innerHTML=`<div class="flex items-center gap-3 cursor-pointer" onclick="go('shop')">
+ $('hdr').innerHTML=`<div class="flex items-center gap-3"><button class="btn2 text-lg leading-none" onclick="side(1)" aria-label="Menu">☰</button><div class="flex items-center gap-3 cursor-pointer" onclick="go('shop')">
   <div class="w-12 h-12 rounded-full border border-pink-500 overflow-hidden">${im(S.site.logoUrl,'w-full h-full object-cover')}</div>
-  <div><div class="cz text-xl font-bold tracking-widest g">BY A HAND</div><div class="text-[10px] tracking-[.2em] text-gray-400 uppercase">Powered by Zink Print</div></div></div>
+  <div><div class="cz text-xl font-bold tracking-widest g">BY A HAND</div><div class="text-[10px] tracking-[.2em] text-gray-400 uppercase">Powered by Zink Print</div></div></div></div>
   <div class="flex items-center gap-2 text-xs">
    ${S.user?`<button class="btn2 hidden sm:block" onclick="go('orders')">My Orders</button>`:''}
    ${S.admin?`<button class="btn2 text-pink-400 font-bold" onclick="go('admin')">Admin</button>`:''}
    <button class="btn2" onclick="cartOpen()">Bag (${S.cart.length})</button>
    ${S.user?`<button class="btn2" onclick="auth.signOut()">Sign out</button>`:`<button class="btn" onclick="authOpen('in')">Sign in</button>`}
   </div>`;
- $('app').innerHTML={shop,checkout,orders,admin}[S.view]();
+ $('app').innerHTML={shop,checkout,orders,admin,about,account}[S.view]();
  const gv=$('aGov').value;$('aGov').innerHTML='<option value="">Select governorate</option>'+govList().map(g=>`<option>${g}</option>`).join('');$('aGov').value=gv;
+ $('fc').innerHTML=(S.site.yt?`<a title="YouTube" class="fcb" style="background:#FF0000" target="_blank" rel="noopener" href="${esc(safe(S.site.yt))}">▶</a>`:'')+(S.site.insta?`<a title="Instagram" class="fcb" style="background:linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)" target="_blank" rel="noopener" href="${esc(safe(S.site.insta))}">📷</a>`:'')+(S.site.wa?`<a title="WhatsApp" class="fcb" style="background:#25D366" target="_blank" rel="noopener" href="https://wa.me/${esc(S.site.wa)}">💬</a>`:'');
  $('ft').innerHTML=`<div class="flex justify-center gap-5 text-sm">${S.site.insta?`<a class="text-pink-400" target="_blank" rel="noopener" href="${esc(safe(S.site.insta))}">Instagram</a>`:''}${S.site.wa?`<a class="text-pink-400" target="_blank" rel="noopener" href="https://wa.me/${esc(S.site.wa)}">WhatsApp</a>`:''}${S.site.legal?`<button class="underline" onclick="showM('<h3 class=&quot;cz g text-xl mb-3&quot;>Terms &amp; policies</h3><p class=&quot;text-sm whitespace-pre-wrap&quot;>'+esc(S.site.legal).replace(/'/g,'&#39;')+'</p>')">Terms &amp; policies</button>`:''}</div><div>&copy; 2026 By A Hand</div>`;
 }
 
@@ -109,9 +121,9 @@ function shop(){
  const none=`<div class="card p-16 text-center max-w-xl mx-auto space-y-3"><div class="text-5xl">✨</div><h2 class="cz text-3xl text-white">No items yet</h2><p class="text-sm text-gray-400">Our first pieces are being made. Follow us to be the first to know.</p>${S.site.insta?`<a class="btn inline-block" target="_blank" rel="noopener" href="${esc(safe(S.site.insta))}">Follow on Instagram</a>`:''}${S.admin?'<p class="text-xs text-pink-400">Admin: add products from the Admin dashboard.</p>':''}</div>`;
  const list=`<h1 class="cz text-4xl g text-center mb-10">THE COLLECTION</h1><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">${S.products.map(p=>`
  <div class="card overflow-hidden flex flex-col"><div class="cursor-pointer relative" onclick="openP('${p.id}')">${im(p.image,'aspect-square object-cover w-full')}${p.items&&p.items.length?'<span class="absolute top-2 left-2 btn !py-1">Bundle</span>':''}</div>
-  <div class="p-4 flex-1"><div class="text-[10px] uppercase tracking-widest text-pink-400">${esc(p.category)}</div><h3 class="cz font-bold text-white">${esc(p.name)}</h3><p class="text-xs text-gray-400 mt-1">${esc(p.description)}</p></div>
-  <div class="p-4 pt-0 flex items-center gap-2"><span class="cz text-pink-400 font-bold flex-1">EGP ${(+p.price).toLocaleString()}</span>
-   <select id="s_${p.id}" class="in !w-auto !py-2 text-xs">${['S','M','L','XL'].map(z=>`<option>${z}</option>`).join('')}</select>
+  <div class="p-4 flex-1"><div class="text-[10px] uppercase tracking-widest text-pink-400">${esc(p.category)}</div><h3 class="cz font-bold text-white">${esc(p.name)}</h3>${rt(p.id)}<p class="text-xs text-gray-400 mt-1">${esc(p.description)}</p></div>
+  <div class="p-4 pt-0 flex flex-wrap items-center gap-2"><span class="cz text-pink-400 font-bold flex-1">EGP ${(+p.price).toLocaleString()}</span>
+   ${pick(p,'s_'+p.id)}
    <button class="btn" onclick="addCart('${p.id}')">Add</button></div></div>`).join('')}</div>`;
  return vid()+(S.products.length?list:none)+(S.site.about?`<div class="card p-8 mt-16 text-center max-w-3xl mx-auto"><h2 class="cz text-2xl g mb-3">ABOUT US</h2><p class="text-sm text-gray-300 whitespace-pre-wrap">${esc(S.site.about)}</p></div>`:'');
 }
@@ -152,7 +164,7 @@ function admin(){
 <div class="card p-5 mb-6 space-y-3"><h3 class="cz text-white">Website content &amp; links</h3>
  <textarea id="sAbout" rows="3" class="in" placeholder="About us text">${esc(S.site.about)}</textarea>
  <div class="grid sm:grid-cols-2 gap-3"><input id="sInsta" class="in" placeholder="Instagram link (https://instagram.com/...)" value="${esc(S.site.insta)}"><input id="sWa" class="in" placeholder="WhatsApp number e.g. 201285374246" value="${esc(S.site.wa)}">
- <input id="sVid" class="in sm:col-span-2" placeholder="YouTube link for the top video" value="${esc((S.site.video||{}).url)}"><input id="sVs" type="number" class="in" placeholder="Clip start (seconds)" value="${(S.site.video||{}).start||''}"><input id="sVe" type="number" class="in" placeholder="Clip end (seconds)" value="${(S.site.video||{}).end||''}">
+ <input id="sYt" class="in sm:col-span-2" placeholder="YouTube channel link" value="${esc(S.site.yt)}"><input id="sVid" class="in sm:col-span-2" placeholder="YouTube link for the top video" value="${esc((S.site.video||{}).url)}"><input id="sVs" type="number" class="in" placeholder="Clip start (seconds)" value="${(S.site.video||{}).start||''}"><input id="sVe" type="number" class="in" placeholder="Clip end (seconds)" value="${(S.site.video||{}).end||''}">
  <input id="sMax" type="number" class="in" placeholder="Max order amount EGP (empty = no limit)" value="${S.site.maxOrder||''}">
  <input id="sE1" class="in" placeholder="EmailJS Service ID" value="${esc(S.site.ejsService)}"><input id="sE2" class="in" placeholder="EmailJS Template ID" value="${esc(S.site.ejsTemplate)}"><input id="sE3" class="in sm:col-span-2" placeholder="EmailJS Public Key (order alerts by email)" value="${esc(S.site.ejsKey)}"></div>
  <textarea id="sLegal" rows="3" class="in" placeholder="Terms, refund and privacy policy text">${esc(S.site.legal)}</textarea><button class="btn" onclick="saveSite()">Save website content</button></div>
@@ -177,7 +189,7 @@ function admin(){
 }
 
 /* ===== actions ===== */
-function addCart(id,sz){const p=S.products.find(x=>x.id==id);S.cart.push({pid:id,name:p.name,price:+p.price,size:sz||$('s_'+id).value,sku:skuOf(p),image:p.image,k:Math.random()});save();cartOpen()}
+function addCart(id,sz){const p=S.products.find(x=>x.id==id),v=sz||$('s_'+id).value;if(isCase(p)&&!MODELS.includes(v))return toast('Please choose your phone model from the list','e');S.cart.push({pid:id,name:p.name,price:+p.price,size:v,sku:skuOf(p),image:p.image,k:Math.random()});save();cartOpen()}
 function cartOpen(){const t=S.cart.reduce((a,i)=>a+i.price,0);
  $('cartBox').innerHTML=`<div class="flex justify-between mb-4"><h3 class="cz g text-xl">YOUR BAG</h3><button onclick="$('cart').classList.add('hidden')">✕</button></div>
  ${S.cart.map(i=>`<div class="flex items-center gap-3 py-3 border-t border-[#3B185F]">${im(i.image,'w-14 h-14 rounded object-cover')}<div class="flex-1 text-sm"><b>${esc(i.name)}</b><div class="text-xs text-gray-400">${i.size} · EGP ${i.price}</div></div><button onclick="S.cart=S.cart.filter(x=>x.k!=${i.k});save();cartOpen();render()">🗑</button></div>`).join('')||'<p class="text-gray-500 text-sm">Your bag is empty.</p>'}
@@ -227,17 +239,30 @@ function editProd(id){const p=S.products.find(x=>x.id==id);$('pId').value=id;$('
 async function delProd(id){if(confirm('Delete this product?'))await db.doc('products/'+id).delete()}
 async function setStatus(id,v){try{await db.doc('orders/'+id).update({status:v});toast('Updated')}catch(x){toast(x.message,'e')}}
 
+function side(o){const sd=$('sd');if(!o){sd.classList.add('hidden');return}const b=(l,v)=>`<button class="w-full text-left py-3 border-b border-[#3B185F] text-sm uppercase tracking-widest" onclick="side(0);go('${v}')">${l}</button>`;
+ $('sdb').innerHTML=`<div class="flex justify-between mb-4"><span class="cz g text-lg">MENU</span><button onclick="side(0)">✕</button></div>${b('Products','shop')}${b('About us','about')}${b('Account','account')}${S.user?b('My orders','orders'):''}${S.admin?b('Admin dashboard','admin'):''}${S.user?`<button class="btn2 w-full mt-6" onclick="side(0);auth.signOut()">Log out</button>`:`<button class="btn w-full mt-6" onclick="side(0);authOpen('in')">Sign in / Register</button>`}`;sd.classList.remove('hidden')}
+function about(){return `<h1 class="cz text-3xl g mb-6 text-center">ABOUT US</h1><div class="card p-8 max-w-3xl mx-auto text-sm text-gray-300 whitespace-pre-wrap">${S.site.about?esc(S.site.about):'Coming soon.'}</div>`}
+function account(){const p=S.profile||{};return `<h1 class="cz text-3xl g mb-6">MY ACCOUNT</h1><div class="card p-6 max-w-xl space-y-3"><div class="text-xs text-gray-400">${esc(S.user.email)} ${S.admin?'<b class="text-pink-400">· Administrator</b>':''}</div>
+ <div><label class="lb">Name</label><input id="uN" class="in" value="${esc(p.name)}"></div><div><label class="lb">Phone</label><input id="uP" class="in" value="${esc(p.phone)}"></div>
+ <div><label class="lb">Governorate</label><select id="uG" class="in">${govList().map(g=>`<option ${g==p.governorate?'selected':''}>${g}</option>`).join('')}</select></div>
+ <div><label class="lb">City / District</label><input id="uC" class="in" value="${esc(p.city)}"></div><div><label class="lb">Address</label><textarea id="uA" rows="2" class="in">${esc(p.address)}</textarea></div>
+ <button class="btn w-full py-3" onclick="saveAcc()">Save changes</button>${S.admin?`<button class="btn2 w-full" onclick="go('admin')">Open admin dashboard</button>`:''}
+ <button class="btn2 w-full" onclick="auth.signOut()">Log out</button><button class="btn2 w-full text-red-400" onclick="delAcc()">Delete my account</button></div>`}
+async function saveAcc(){const d={name:$('uN').value.trim(),phone:$('uP').value.trim(),governorate:$('uG').value,city:$('uC').value.trim(),address:$('uA').value.trim()};try{await db.doc('users/'+S.user.uid).set(d,{merge:true});S.profile={...S.profile,...d};toast('Saved')}catch(x){toast(x.message,'e')}}
+async function delAcc(){if(!confirm('Delete your account permanently? This cannot be undone.'))return;try{await db.doc('users/'+S.user.uid).delete();await auth.currentUser.delete();toast('Account deleted')}catch(x){toast(x.code=='auth/requires-recent-login'?'For safety, sign out, sign in again, then delete':x.message,'e')}}
+async function rate(id,n){try{await db.doc('ratings/'+id+'_'+S.user.uid).set({pid:id,stars:n,uid:S.user.uid});toast('Thanks for rating!');openP(id)}catch(x){toast(x.message,'e')}}
 function showM(h){$('pmb').innerHTML='<button class="absolute top-3 right-4" onclick="$(\'pm\').classList.add(\'hidden\')">✕</button>'+h;$('pm').classList.remove('hidden')}
 function tilt(e,el){const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;el.style.transform=`perspective(800px) rotateY(${x*14}deg) rotateX(${-y*14}deg) scale(1.03)`}
-function openP(id){const p=S.products.find(x=>x.id==id);if(!p)return;showM(`<div class="grid md:grid-cols-2 gap-6 items-center"><div onmousemove="tilt(event,this)" onmouseleave="this.style.transform=''" style="transition:transform .1s">${im(p.image,'w-full rounded-xl')}</div><div class="space-y-3"><h2 class="cz text-2xl text-white">${esc(p.name)}</h2><p class="cz text-pink-400 text-xl">EGP ${(+p.price).toLocaleString()}</p><p class="text-sm text-gray-300">${esc(p.description)}</p>${p.items&&p.items.length?`<p class="text-xs text-gray-400">Includes: ${p.items.map(i=>esc((S.products.find(x=>x.id==i)||{}).name)).join(', ')}</p>`:''}<select id="ps" class="in">${['S','M','L','XL'].map(z=>`<option>${z}</option>`).join('')}</select><button class="btn w-full py-3" onclick="addCart('${p.id}',$('ps').value);$('pm').classList.add('hidden')">Add to bag</button></div></div>`)}
+function openP(id){const p=S.products.find(x=>x.id==id);if(!p)return;showM(`<div class="grid md:grid-cols-2 gap-6 items-center"><div onmousemove="tilt(event,this)" onmouseleave="this.style.transform=''" style="transition:transform .1s">${im(p.image,'w-full rounded-xl')}</div><div class="space-y-3"><h2 class="cz text-2xl text-white">${esc(p.name)}</h2><p class="cz text-pink-400 text-xl">EGP ${(+p.price).toLocaleString()}</p><p class="text-sm text-gray-300">${esc(p.description)}</p>${rt(p.id)}${canRate(p.id)?`<div class="text-xs text-gray-400">Rate this product: ${[1,2,3,4,5].map(n=>`<button class="text-2xl text-pink-400" onclick="rate('${p.id}',${n})">${n<=myRate(p.id)?'★':'☆'}</button>`).join('')}</div>`:''}${p.items&&p.items.length?`<p class="text-xs text-gray-400">Includes: ${p.items.map(i=>esc((S.products.find(x=>x.id==i)||{}).name)).join(', ')}</p>`:''}${pick(p,'ps')}<button class="btn w-full py-3" onclick="addCart('${p.id}',$('ps').value);$('pm').classList.add('hidden')">Add to bag</button></div></div>`)}
 async function applyCoupon(){const c=$('cc').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(!c)return;try{const d=await db.doc('coupons/'+c).get();if(!d.exists||!d.data().active)return toast('Invalid coupon','e');S.coupon={code:c,...d.data()};toast('Coupon applied');render()}catch(x){toast('Invalid coupon','e')}}
 async function addCoupon(){const c=$('kC').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(!c||!+$('kV').value)return toast('Code and value needed','e');try{await db.doc('coupons/'+c).set({type:$('kT').value,value:+$('kV').value,active:true});toast('Coupon added')}catch(x){toast(x.message,'e')}}
 async function delCoupon(c){if(confirm('Delete coupon?'))await db.doc('coupons/'+c).delete()}
-async function saveSite(){const u=$('sVid').value.trim(),m=u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);try{await db.doc('settings/site').set({about:$('sAbout').value,insta:$('sInsta').value.trim(),wa:$('sWa').value.replace(/\D/g,''),legal:$('sLegal').value,maxOrder:+$('sMax').value||0,ejsService:$('sE1').value.trim(),ejsTemplate:$('sE2').value.trim(),ejsKey:$('sE3').value.trim(),video:{id:m?m[1]:'',url:u,start:+$('sVs').value||0,end:+$('sVe').value||0}},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
+async function saveSite(){const u=$('sVid').value.trim(),m=u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);try{await db.doc('settings/site').set({about:$('sAbout').value,insta:$('sInsta').value.trim(),yt:$('sYt').value.trim(),wa:$('sWa').value.replace(/\D/g,''),legal:$('sLegal').value,maxOrder:+$('sMax').value||0,ejsService:$('sE1').value.trim(),ejsTemplate:$('sE2').value.trim(),ejsKey:$('sE3').value.trim(),video:{id:m?m[1]:'',url:u,start:+$('sVs').value||0,end:+$('sVe').value||0}},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
 async function saveBundle(){const f=$('bI').files[0],items=[...document.querySelectorAll('.bc:checked')].map(c=>c.value);if(!$('bN').value.trim()||!+$('bP').value||items.length<2)return toast('Name, price and at least 2 products needed','e');try{await db.collection('products').add({name:$('bN').value.trim(),price:+$('bP').value,category:'Bundle',description:$('bD').value.trim(),zinkSKU:'',items,image:f?await up(f,'p',700):''});toast('Bundle saved')}catch(x){toast(x.message,'e')}}
 async function saveGovs(){const g=[...document.querySelectorAll('.gv:checked')].map(c=>c.value);try{await db.doc('settings/site').set({govs:g},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
 function copyAddr(id){const o=S.orders.find(x=>x.id==id),c=o.customer;navigator.clipboard.writeText(c.name+'\n'+c.phone+'\n'+c.governorate+', '+c.city+', '+c.address).then(()=>toast('Copied'))}
 async function setShip(id){const t=prompt('Tracking number or courier note (optional)');if(t===null)return;try{await db.doc('orders/'+id).update({status:'shipped',tracking:t.trim()});toast('Updated')}catch(x){toast(x.message,'e')}}
 
+$('mdl').innerHTML=MODELS.map(m=>`<option value="${esc(m)}">`).join('');
 render();
 </script></body></html>
