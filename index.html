@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
-<title>By A Hand - Custom Printed Gifts</title>
+<title>By A Hand</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -66,9 +66,10 @@ const bad=e=>{e.onerror=null;e.src=FALL};
 const im=(s,c)=>`<img src="${esc(s||FALL)}" class="${c}" onerror="bad(this)">`;
 const MODELS=[...new Set("other|iPhone 16 Pro Max|iPhone 16 Pro|iPhone 16|iPhone 14 Pro|iPhone 13 Pro|iPhone 13 mini|iPhone 13|iPhone 12 Pro Max|iPhone 12 Pro|iPhone 12 mini|iPhone 11 Pro Max|iPhone 11 Pro|iPhone 11|iPhone X/XS|iPhone 7+|iPhone 7|iPhone 6+|iPhone 6|Samsung Galaxy S10|Samsung Galaxy S10 Lite|Samsung Galaxy S9 Plus|Samsung Note 4|Samsung Note 9|Samsung Note 10 Lite|Samsung Note 10 Pro/10+|Samsung Note 20 Ultra|Samsung Note 20 Plus|Samsung S20|Samsung S20 Plus|Samsung S20 FE|Samsung S20 Ultra|Samsung S21/S30|Samsung S21 Plus|Samsung S22 Ultra|Samsung S23|Samsung S23 Ultra|Samsung A02/M02|Samsung A022/M02S|Samsung A03s|Samsung A04|Samsung A05s|Samsung A12/M12|Samsung A13 4G|Samsung A14|Samsung A15|Samsung A20/A30/M10s|Samsung A20s|Samsung A21|Samsung A21s|Samsung A22 4G|Samsung A22 5G|Samsung A23|Samsung A24|Samsung A30s|Samsung A31/A8|Samsung A32 4G|Samsung A32 5G|Samsung A33|Samsung A35 5G|Samsung A51/M40s|Samsung A52|Samsung A53|Samsung A54|Samsung A70/A70s|Samsung A80|Samsung M11|Samsung M30s|Samsung M31|Samsung M33 5G|Samsung M51|Samsung M52|Samsung M53|Redmi 9|Redmi 9T|Redmi 10|Redmi 10C|Redmi 12|Redmi Note 8|Redmi Note 8 Pro|Redmi Note 9|Redmi Note 9S|Redmi Note 10 Pro|Redmi Note 10 5G|Redmi Note 10S|Redmi Note 11 5G|Redmi Note 11 Pro 5G/4G|Redmi Note 11S 4G|Redmi Note 11 T5G|Redmi Note 13|Xiaomi Redmi Note 7/7 Pro/Mi Note 7|Xiaomi Redmi Note 9|Xiaomi Note 9s/9 Pro|Xiaomi Note 8|Xiaomi HM Note 9S/9 Pro Max/Note 10 Lite|Xiaomi HM Note 10 Pro 5G|Xiaomi HM Note 11 5G|Xiaomi HM Note 11 4G|Xiaomi Mi 11T|Xiaomi Mi 12T|Xiaomi 9T/9T Pro|Mi Note 10 Lite|Huawei Nova 2i/Mate 10 Lite/Honor 9i|Huawei Nova 7|Huawei Honor 20 Pro|Huawei Honor 50 Lite/X20/Nova 8i|Huawei Honor 20/Nova 5T|Huawei Honor 20 Lite|Huawei Honor Play|Huawei Honor 8X|Huawei Mate 20 Pro|Realme 7|Realme 7 Pro|Realme 8|Realme 8 Pro|Realme 10|Realme 11|Realme C15/C12/C25|Realme C21|Realme C53|Realme 9i/Oppo A76/A36|Oppo F7|Oppo F11|Oppo A57|Oppo A52|Oppo A54 4G/A55 5G|Oppo A73/F17|Oppo A75|Oppo A80|Oppo A92/A72/A52|Oppo A93/Reno 4 Lite/F17 Pro/Reno 2F|Oppo Reno 2|Oppo Reno 2F/2Z|Oppo Reno 3|Oppo Reno 4 Pro|Oppo Reno 5|Oppo Reno 5 4G/5G|Oppo Reno 5 Pro|Oppo Reno 6 5G|Oppo Reno 8T 4G|Oppo Reno 10 5G".split('|'))];
 const isCase=p=>/case/i.test(p.category||'');
-const noSize=p=>!isCase(p)&&/tote|bag/i.test((p.category||'')+' '+(p.name||''));
+const isCloth=p=>/cloth|apparel|shirt|tee|hood|sweat|dress|jacket|pant/i.test(p.category||'')||(p.items||[]).some(i=>{const q=S.products.find(x=>x.id==i);return q&&isCloth(q)});
+const noSize=p=>!isCase(p)&&!isCloth(p);
 const szt=z=>z?' ('+z+')':'';
-const pick=(p,id)=>noSize(p)?'':isCase(p)?`<input id="${id}" list="mdl" class="in !w-auto !py-2 text-xs" placeholder="Search phone model" style="min-width:9rem">`:`<select id="${id}" class="in !w-auto !py-2 text-xs">${['S','M','L','XL'].map(z=>`<option>${z}</option>`).join('')}</select>`;
+const pick=(p,id)=>noSize(p)?'':isCase(p)?`<input id="${id}" list="mdl" class="in !w-auto !py-2 text-xs" placeholder="Phone model" style="min-width:9rem">`:`<select id="${id}" class="in !w-auto !py-2 text-xs">${['S','M','L','XL'].map(z=>`<option>${z}</option>`).join('')}</select>`;
 const rt=id=>{const a=(S.ratings||[]).filter(x=>x.pid==id);if(!a.length)return '';const m=a.reduce((t,x)=>t+x.stars,0)/a.length,k=Math.round(m);return `<div class="text-pink-400 text-sm">${'★'.repeat(k)}${'☆'.repeat(5-k)} <span class="text-xs text-gray-500">${m.toFixed(1)} (${a.length})</span></div>`};
 const canRate=id=>S.user&&S.orders.some(o=>o.status=='delivered'&&o.items.some(i=>i.pid==id));
 const myRate=id=>((S.ratings||[]).find(x=>x.pid==id&&S.user&&x.uid==S.user.uid)||{}).stars||0;
@@ -135,7 +136,7 @@ function vid(){const v=S.site.video;if(!v||!v.id)return '';return `<div class="r
 function cards(){const q=(S.q||'').trim().toLowerCase(),L=S.products.filter(p=>!q||[p.name,p.category,p.description].join(' ').toLowerCase().includes(q));return L.length?L.map(p=>`
  <div class="card overflow-hidden flex flex-col"><div class="cursor-pointer relative" onclick="openP('${p.id}')">${im(p.image,'aspect-square object-cover w-full')}${p.items&&p.items.length?'<span class="absolute top-2 left-2 btn !py-1">Bundle</span>':''}</div>
   <div class="p-4 flex-1"><div class="text-[10px] uppercase tracking-widest text-pink-400">${esc(p.category)}</div><h3 class="cz font-bold text-white">${esc(p.name)}</h3>${rt(p.id)}<p class="text-xs text-gray-400 mt-1">${esc(p.description)}</p></div>
-  <div class="p-4 pt-0 flex flex-wrap items-center gap-2"><span class="cz text-pink-400 font-bold flex-1">EGP ${(+p.price).toLocaleString()}</span>
+  <div class="p-4 pt-0 flex flex-wrap items-center gap-2"><span class="cz text-pink-400 font-bold flex-1 whitespace-nowrap">EGP ${(+p.price).toLocaleString()}</span>
    ${pick(p,'s_'+p.id)}
    <button class="btn" onclick="addCart('${p.id}')">Add</button></div></div>`).join(''):'<p class="text-center text-gray-400 text-sm col-span-full">No products match your search.</p>'}
 function shop(){
