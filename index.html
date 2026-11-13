@@ -197,7 +197,7 @@ const sumHtml=()=>{const c=calc(),fa=freeAbove();return `<div class="text-sm spa
  <p class="text-[11px] text-gray-400">Free delivery when you pay more than EGP ${fa} · التوصيل مجاني عند الدفع بأكثر من ${fa} جنيه</p>
  <div class="flex justify-between font-bold text-base pt-1"><span>You pay by InstaPay</span><span class="text-pink-400">EGP ${c.t.toLocaleString()}</span></div></div>`};
 function updSum(){if($('cSum'))$('cSum').innerHTML=sumHtml();if($('cB'))$('cB').textContent='Place order · EGP '+calc().t.toLocaleString()}
-const payBox=()=>{const s=S.site;if(!s.ipa&&!s.ipPhone)return '<p class="text-xs text-red-400">Payment details are not set up yet. Please contact us.</p>';
+const payBox=()=>{const s=S.site;if(!s.ipa&&!s.ipPhone&&!s.qrUrl)return '<p class="text-xs text-red-400">Payment details are not set up yet. Please contact us.</p>';
  const row=(l,v)=>`<div class="flex justify-between items-center gap-2"><span>${l}: <b class="font-mono select-text">${esc(v)}</b></span><button class="btn2" onclick="copyText('${esc(v)}')">Copy</button></div>`;
  return `<div class="p-4 rounded-xl bg-black/40 border border-[#3B185F] space-y-2 text-sm"><p class="text-xs text-gray-400">Send the exact total below to our InstaPay, then upload the screenshot of the transfer.</p>${s.ipa?row('InstaPay address (IPA)',s.ipa):''}${s.ipPhone?row('InstaPay phone',s.ipPhone):''}${s.qrUrl?`<img src="${esc(s.qrUrl)}" alt="InstaPay QR" class="w-44 mx-auto rounded-xl bg-white p-2" onerror="this.remove()">`:''}</div>`};
 function checkout(){
@@ -219,9 +219,9 @@ function checkout(){
   <div class="flex gap-2"><input id="cc" class="in" placeholder="Coupon code" value="${esc(fv('cc'))}"><button class="btn2" onclick="applyCoupon()">Apply</button></div>
   <div id="cSum">${sumHtml()}</div>
   ${S.site.maxOrder&&t>S.site.maxOrder?`<p class="text-xs text-red-400">Maximum online order is EGP ${S.site.maxOrder}. Please reduce your bag.</p>`:''}
-  <div class="p-3 rounded-xl bg-black/40 border border-[#3B185F] space-y-2"><p class="text-xs text-gray-300">Your InstaPay details, used to refund you if your order is cancelled. Fill at least one. · بيانات إنستاباي الخاصة بك لإرجاع المبلغ إذا تم إلغاء الطلب (واحد على الأقل)</p>
-   <div><label class="lb">Your InstaPay address (IPA)</label><input id="cIP" class="in" placeholder="name@instapay" value="${esc(fv('cIP'))}"></div>
-   <div><label class="lb">Your phone number on InstaPay</label><input id="cIPH" class="in" placeholder="01XXXXXXXXX" value="${esc(fv('cIPH'))}"></div></div>
+  <div class="p-3 rounded-xl bg-black/40 border border-[#3B185F] space-y-2"><p class="text-xs text-gray-300">Required: your InstaPay details, used to refund you if your order is cancelled. Fill at least one. · بيانات إنستاباي الخاصة بك لإرجاع المبلغ إذا تم إلغاء الطلب (واحد على الأقل)</p>
+   <div><label class="lb">Your InstaPay address (IPA) *</label><input id="cIP" class="in" placeholder="name@instapay" value="${esc(fv('cIP'))}"></div>
+   <div><label class="lb">Your phone number on InstaPay *</label><input id="cIPH" class="in" placeholder="01XXXXXXXXX" value="${esc(fv('cIPH'))}"></div></div>
   <div><label class="lb">Screenshot of your transfer (required)</label><input id="cR" type="file" accept="image/*" class="text-xs" onchange="pickReceipt(event)"><div id="cRp">${S.receipt?`<img src="${S.receipt}" class="mt-2 max-h-40 rounded-lg">`:''}</div></div>
   <p class="text-[11px] text-gray-400">Every item is custom printed for you. We may call or message you to confirm your order before it is made, so please keep both phones on.</p>
   <button id="cB" class="btn w-full py-3" onclick="placeOrder()">Place order · EGP ${t.toLocaleString()}</button></div></div>`;
@@ -252,8 +252,8 @@ function admin(){
  <div class="flex flex-wrap gap-3 text-xs">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d,i)=>`<label class="flex gap-1"><input type="checkbox" class="od" value="${i}" ${(Array.isArray(S.site.openDays)?S.site.openDays:[0,1,2,3,4,5,6]).includes(i)?'checked':''}>${d}</label>`).join('')}</div>
  <label class="text-xs flex gap-2"><input type="checkbox" id="sCl" ${S.site.closed?'checked':''}>Close the store now (holiday / break). This overrides the schedule.</label>
  <hr class="border-[#3B185F]">
- <div class="grid sm:grid-cols-2 gap-3"><input id="sIPA" class="in" placeholder="OUR InstaPay address (customers pay here), e.g. name@instapay" value="${esc(S.site.ipa)}"><input id="sIPH" class="in" placeholder="OUR InstaPay phone number (customers pay here)" value="${esc(S.site.ipPhone)}"><input id="sDW" class="in" placeholder="Delivery window, e.g. 5-10 working days" value="${esc(S.site.deliveryWindow)}"><input id="sFA" type="number" min="0" class="in" placeholder="Free delivery above EGP" value="${freeAbove()}"></div>
- <div><label class="lb">InstaPay QR code image (customers see it at checkout)</label><p class="text-xs text-gray-400 mb-1">Open your QR in the InstaPay app, take a screenshot, crop it to the QR only, and upload it here.</p><div class="flex items-center gap-4"><input type="file" accept="image/*" class="text-xs" onchange="setSite(event,'qrUrl','site')">${S.site.qrUrl?im(S.site.qrUrl,'w-20 h-20 rounded bg-white p-1'):'<span class="text-xs text-gray-500">No QR uploaded yet</span>'}</div></div>
+ <div class="grid sm:grid-cols-2 gap-3"><input id="sIPA" class="in" placeholder="OUR InstaPay address (optional), e.g. name@instapay" value="${esc(S.site.ipa)}"><input id="sIPH" class="in" placeholder="OUR InstaPay phone number (optional)" value="${esc(S.site.ipPhone)}"><input id="sDW" class="in" placeholder="Delivery window, e.g. 5-10 working days" value="${esc(S.site.deliveryWindow)}"><input id="sFA" type="number" min="0" class="in" placeholder="Free delivery above EGP" value="${freeAbove()}"></div>
+ <div><label class="lb">InstaPay QR code image (optional - customers see it at checkout)</label><p class="text-xs text-gray-400 mb-1">Open your QR in the InstaPay app, take a screenshot, crop it to the QR only, and upload it here.</p><div class="flex items-center gap-4"><input type="file" accept="image/*" class="text-xs" onchange="setSite(event,'qrUrl','site')">${S.site.qrUrl?im(S.site.qrUrl,'w-20 h-20 rounded bg-white p-1'):'<span class="text-xs text-gray-500">No QR uploaded yet</span>'}</div></div>
  <div><label class="lb">Delivery fee per governorate (EGP)</label><div class="grid grid-cols-2 sm:grid-cols-3 gap-2">${GOV.map((g,i)=>`<label class="text-xs flex items-center justify-between gap-2">${esc(g)}<input id="fee_${i}" type="number" min="0" class="in !w-20 !py-1" value="${fee(g)}"></label>`).join('')}</div></div>
  <button class="btn" onclick="saveStore()">Save store &amp; payment settings</button></div>
 <div class="card p-5 mb-6 space-y-3"><h3 class="cz text-white">Website content &amp; links</h3>
@@ -323,7 +323,7 @@ async function placeOrder(){
  if(ipa&&!okIPA(ipa))return toast('Your InstaPay address should look like name@instapay','e');
  if(iph&&!okInstaPhone(iph))return toast('Your InstaPay phone must be an Egyptian mobile number (01XXXXXXXXX)','e');
  const ip=[ipa,iph].filter(Boolean).join(' | ');
- if(!S.site.ipa&&!S.site.ipPhone)return toast('Payment details are not set up yet, please contact us','e');
+ if(!S.site.ipa&&!S.site.ipPhone&&!S.site.qrUrl)return toast('Payment details are not set up yet, please contact us','e');
  if(!S.receipt)return toast('Please upload the screenshot of your InstaPay transfer','e');
  const c=calc();
  if(S.site.maxOrder&&c.t>S.site.maxOrder)return toast('Orders above EGP '+S.site.maxOrder+' are not accepted online','e');
@@ -360,7 +360,6 @@ async function testMail(){
 }
 async function saveStore(){
  const days=[...document.querySelectorAll('.od:checked')].map(c=>+c.value),fees={},ipa=$('sIPA').value.trim(),iph=$('sIPH').value.trim();
- if(!ipa&&!iph)return toast('Enter an InstaPay address or phone number, otherwise customers cannot pay','e');
  if(ipa&&!okIPA(ipa))return toast('InstaPay address looks wrong - it should look like name@instapay','e');
  if(iph&&!okInstaPhone(iph))return toast('InstaPay phone must be an Egyptian mobile number (01XXXXXXXXX)','e');
  GOV.forEach((g,i)=>{const x=$('fee_'+i).value;if(x!=='')fees[g]=+x});
