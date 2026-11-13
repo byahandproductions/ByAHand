@@ -19,6 +19,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#0F051D;color:#F3E8FF
 .card{background:#1A0B2E;border:1px solid #3B185F;border-radius:1.25rem}
 .lb{display:block;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:.25rem}
 .hidden{display:none}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}.bag-arrow{animation:bob 1s ease-in-out infinite}
 .fcb{width:3rem;height:3rem;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;color:#fff;box-shadow:0 8px 20px #0008}
 </style></head>
 <body>
@@ -30,8 +31,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#0F051D;color:#F3E8FF
 <footer id="ft" class="border-t border-[#3B185F] py-8 text-center text-xs text-gray-500 space-y-2"></footer>
 
 <div id="cart" class="hidden fixed inset-0 z-50 bg-black/80 flex justify-end"><div id="cartBox" class="card w-full max-w-md h-full p-6 overflow-y-auto"></div></div>
-<div id="auth" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
- <div class="card w-full max-w-md p-6 space-y-3 my-6">
+<div id="auth" class="hidden fixed inset-0 z-50 bg-black/80 flex justify-center p-4 overflow-y-auto">
+ <div class="card w-full max-w-md p-6 space-y-3 my-auto">
   <div class="flex justify-between"><h3 id="aT" class="cz text-xl g">Sign In</h3><button onclick="$('auth').classList.add('hidden')">✕</button></div>
   <div id="aReg" class="hidden space-y-3">
    <div><label class="lb">Full name</label><input id="aName" class="in"></div>
@@ -42,12 +43,14 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#0F051D;color:#F3E8FF
    <div><label class="lb">Street, building, apartment</label><textarea id="aAddr" rows="2" class="in"></textarea></div>
   </div>
   <div><label class="lb">Email</label><input id="aEmail" type="email" class="in"></div>
-  <div><label class="lb">Password (6+ characters)</label><input id="aPass" type="password" class="in"></div>
+  <div><label class="lb">Password (6+ characters)</label><input id="aPass" type="password" class="in">
+  <p class="text-[11px] text-gray-400 mt-1">Forgot your password? Please contact us. · نسيت كلمة المرور؟ تواصل معنا. <span id="aWa"></span></p>
+  <button id="aFp" type="button" class="text-xs text-pink-400 underline" onclick="forgotPw()">Email me a password reset link · أرسل لي رابط إعادة تعيين كلمة المرور</button></div>
   <button id="aGo" class="btn w-full py-3" onclick="authGo()">Sign In</button>
   <button id="aSw" class="text-xs text-gray-400 w-full" onclick="authMode(mode=='in'?'reg':'in')">New here? Register</button>
  </div>
 </div>
-<div id="pm" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target==this)this.classList.add('hidden')"><div id="pmb" class="card w-full max-w-3xl p-6 relative my-6"></div></div>
+<div id="pm" class="hidden fixed inset-0 z-50 bg-black/80 flex justify-center p-4 overflow-y-auto" onclick="if(event.target==this)this.classList.add('hidden')"><div id="pmb" class="card w-full max-w-3xl p-6 relative my-auto"></div></div>
 <div id="sd" class="hidden fixed inset-0 z-50 bg-black/60" onclick="if(event.target==this)side(0)"><div id="sdb" class="card h-full w-72 p-6 !rounded-none overflow-y-auto"></div></div>
 <div id="fc" class="fixed bottom-6 right-6 z-40 flex flex-col gap-3"></div>
 <datalist id="mdl"></datalist>
@@ -64,7 +67,7 @@ const GOV=Object.keys(FEES);
 const fee=g=>{const o=(S.site.fees||{})[g];return o!=null&&o!==''?+o:(FEES[g]??0)};
 const freeAbove=()=>S.site.freeAbove!=null&&S.site.freeAbove!==''?+S.site.freeAbove:500;
 const shipFor=(it,g)=>it>freeAbove()?0:fee(g);
-const genCid=()=>'C'+[...crypto.getRandomValues(new Uint8Array(8))].map(n=>n%10).join('');
+const genCid=()=>'C'+[...crypto.getRandomValues(new Uint8Array(8))].map(n=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[n%32]).join('');
 /* InstaPay: either an address (name@instapay) or an Egyptian mobile number */
 const okIPA=s=>/^[A-Za-z0-9._-]{3,}@[A-Za-z]{2,}$/.test(String(s||'').trim());
 const okInstaPhone=s=>/^(?:\+?20|0)1[0125]\d{8}$/.test(ph(s));
@@ -120,7 +123,7 @@ const sum=()=>S.cart.reduce((a,i)=>a+i.price,0);
 const disc=s=>!S.coupon?0:S.coupon.type=='pct'?Math.round(s*S.coupon.value/100):Math.min(S.coupon.value,s);
 const govList=()=>{const L=(S.site.govs&&S.site.govs.length?S.site.govs:GOV).filter(g=>FEES[g]!=null);return L.length?L:GOV};
 const skuOf=p=>p.items&&p.items.length?p.items.map(i=>(S.products.find(x=>x.id==i)||{}).zinkSKU).join(' + '):p.zinkSKU;
-let S={user:null,profile:null,admin:false,unlocked:false,coupons:[],site:{},products:[],orders:[],allOrders:[],form:{},receipt:null,view:'shop',cart:JSON.parse(localStorage.getItem('bah_cart')||'[]')},unsubO=null,unsubC=null,unsubA=null,mode='in';
+let S={user:null,profile:null,admin:false,unlocked:false,coupons:[],site:{},products:[],orders:[],allOrders:[],myCoupons:[],users:[],uq:'',atab:'orders',of:'all',oq:'',bagSeen:!!localStorage.getItem('bah_bagseen'),form:{},receipt:null,view:'shop',cart:JSON.parse(localStorage.getItem('bah_cart')||'[]')},unsubO=null,unsubC=null,unsubA=null,unsubM=null,unsubU=null,mode='in';
 
 function toast(m,err){const d=document.createElement('div');d.className='px-4 py-3 rounded-xl text-sm border '+(err?'bg-red-950 border-red-500 text-red-200':'bg-[#1A0B2E] border-pink-500 text-pink-300');d.textContent=m;$('toast').appendChild(d);setTimeout(()=>d.remove(),3500)}
 function up(f,p,max=700){return new Promise((ok,no)=>{const i=new Image,u=URL.createObjectURL(f);i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.72))};i.onerror=()=>no(new Error('Could not read this image'));i.src=u})}
@@ -132,8 +135,11 @@ db.doc('settings/site').onSnapshot(s=>{S.site=s.data()||{};render()});
 db.collection('ratings').onSnapshot(s=>{S.ratings=s.docs.map(d=>d.data());render()});
 db.collection('products').onSnapshot(s=>{S.products=s.docs.map(d=>({id:d.id,...d.data()}));render()});
 function startData(){
- if(unsubO){unsubO();unsubO=null}if(unsubC){unsubC();unsubC=null}if(unsubA){unsubA();unsubA=null}
+ if(unsubO){unsubO();unsubO=null}if(unsubC){unsubC();unsubC=null}if(unsubA){unsubA();unsubA=null}if(unsubM){unsubM();unsubM=null}if(unsubU){unsubU();unsubU=null}
  const u=S.user;if(!u)return;
+ if(S.unlocked)unsubU=db.collection('users').onSnapshot(q=>{S.users=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));render()},e=>console.error(e));else S.users=[];
+ /* coupons the admin sent to THIS customer (the database only lets you list your own) */
+ unsubM=db.collection('coupons').where('forUid','==',u.uid).onSnapshot(c=>{S.myCoupons=c.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.error(e));
  if(S.unlocked)unsubC=db.collection('coupons').onSnapshot(c=>{S.coupons=c.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.error(e));else S.coupons=[];
  const srt=s=>s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
  /* "My orders" is ALWAYS only this account's own orders - even for the admin */
@@ -142,10 +148,12 @@ function startData(){
  if(S.unlocked)unsubA=db.collection('orders').onSnapshot(s=>{if(S.allLoaded)s.docChanges().forEach(c=>{if(c.type=='added'&&c.doc.data().uid!=u.uid)toast('🔔 New order from '+c.doc.data().customer.name)});S.allLoaded=true;S.allOrders=srt(s);render()},e=>console.error(e));else S.allOrders=[];
 }
 auth.onAuthStateChanged(async u=>{
- S.user=u;S.admin=false;S.unlocked=false;S.profile=null;S.orders=[];S.allOrders=[];S.coupons=[];S.allLoaded=false;
- if(unsubO){unsubO();unsubO=null}if(unsubC){unsubC();unsubC=null}if(unsubA){unsubA();unsubA=null}
+ S.user=u;S.admin=false;S.unlocked=false;S.profile=null;S.orders=[];S.allOrders=[];S.coupons=[];S.myCoupons=[];S.users=[];S.allLoaded=false;
+ if(unsubO){unsubO();unsubO=null}if(unsubC){unsubC();unsubC=null}if(unsubA){unsubA();unsubA=null}if(unsubM){unsubM();unsubM=null}if(unsubU){unsubU();unsubU=null}
  if(u){
-  S.profile=(await db.doc('users/'+u.uid).get()).data()||{};
+  S.profile=(await db.doc('users/'+u.uid).get()).data()||S.profile||{};
+  /* old accounts get their permanent ID the first time they log in; everyone gets a "last login" stamp */
+  if(!S.reg&&S.profile.name){if(!S.profile.cid){try{await claimCid(u.uid)}catch(e){console.error(e)}}db.doc('users/'+u.uid).set({lastLogin:Date.now()},{merge:true}).catch(()=>{})}
   try{S.admin=(await db.doc('admins/'+u.uid).get()).exists}catch(e){}
   if((u.email||'').toLowerCase()=='byahandproductions@gmail.com')S.admin=true;
   /* admin is only "unlocked" if the database accepts the 3-code session */
@@ -159,13 +167,17 @@ auth.onAuthStateChanged(async u=>{
 function render(){
  if(S.view=='checkout'&&$('cN'))['cN','cP','cP2','cG','cC','cA','cc','cIP','cIPH'].forEach(k=>{if($(k))S.form[k]=$(k).value});
  renderBar();
+ if($('aWa'))$('aWa').innerHTML=S.site.wa?`<a class="text-pink-400 underline" target="_blank" rel="noopener" href="https://wa.me/${esc(S.site.wa)}?text=${encodeURIComponent('I forgot my password')}">WhatsApp us</a>`:'';
+ const hint=S.cart.length>0&&!S.bagSeen;
  $('hdr').innerHTML=`<div class="flex items-center gap-3"><button class="btn2 text-lg leading-none" onclick="side(1)" aria-label="Menu">☰</button><div class="flex items-center gap-3 cursor-pointer" onclick="go('shop')">
   <div class="w-12 h-12 rounded-full border border-pink-500 overflow-hidden">${im(S.site.logoUrl,'w-full h-full object-cover')}</div>
   <div><div class="cz text-xl font-bold tracking-widest g">BY A HAND</div><div class="text-[10px] tracking-[.2em] text-gray-400 uppercase">Powered by Zink Print</div></div></div></div>
   <div class="flex items-center gap-2 text-xs">
+   <button class="btn2 ${S.view=='shop'?'border-pink-500 text-pink-400':''}" onclick="go('shop')">Products</button>
    ${S.user?`<button class="btn2 hidden sm:block" onclick="go('orders')">My Orders</button>`:''}
    ${S.admin?`<button class="btn2 text-pink-400 font-bold" onclick="go('admin')">Admin</button>`:''}
-   <button class="btn2" onclick="cartOpen()">Bag (${S.cart.length})</button>
+   ${S.user?`<button class="btn2 hidden sm:block ${myCps().length?'text-pink-400 font-bold border-pink-500':''}" onclick="showCoupons()">🎟 Coupons${myCps().length?' ('+myCps().length+')':''}</button>`:''}
+   <span class="relative inline-block"><button class="btn2 ${hint?'ring-2 ring-pink-500':''}" onclick="cartOpen()">Bag (${S.cart.length})</button>${hint?`<span class="bag-arrow absolute right-0 top-full mt-2 whitespace-nowrap text-[11px] text-pink-300 pointer-events-none text-right"><span class="block text-xl leading-none pr-4">⬆</span>Tap here to view your bag<br><span dir="rtl">اضغط هنا لعرض حقيبتك</span></span>`:''}</span>
    ${S.user?`<button class="btn2" onclick="auth.signOut()">Sign out</button>`:`<button class="btn" onclick="authOpen('in')">Sign in</button>`}
   </div>`;
  $('app').innerHTML={shop,checkout,orders,admin,about,account}[S.view]();
@@ -174,6 +186,11 @@ function render(){
  $('ft').innerHTML=`<div class="flex justify-center gap-5 text-sm">${S.site.insta?`<a class="text-pink-400" target="_blank" rel="noopener" href="${esc(safe(S.site.insta))}">Instagram</a>`:''}${S.site.tt?`<a class="text-pink-400" target="_blank" rel="noopener" href="${esc(safe(S.site.tt))}">TikTok</a>`:''}${S.site.yt?`<a class="text-pink-400" target="_blank" rel="noopener" href="${esc(safe(S.site.yt))}">YouTube</a>`:''}${S.site.wa?`<a class="text-pink-400" target="_blank" rel="noopener" href="https://wa.me/${esc(S.site.wa)}">WhatsApp</a>`:''}${S.site.legal?`<button class="underline" onclick="showTerms()">Terms &amp; policies</button>`:''}</div><div>&copy; 2026 By A Hand</div>`;
 }
 
+const myCps=()=>(S.myCoupons||[]).filter(c=>c.active!==false&&!c.used&&(!c.expiresAt||!c.expiresAt.toMillis||c.expiresAt.toMillis()>Date.now()));
+const cpLabel=c=>c.type=='pct'?c.value+'% off':'EGP '+c.value+' off';
+function cpHtml(){const L=myCps();if(!L.length)return '';return `<div class="card p-5 mb-8 border-pink-500/60"><h2 class="cz g text-lg mb-3">🎟 YOUR COUPONS · كوبوناتك</h2><div class="flex flex-wrap gap-3">${L.map(c=>`<div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-black/40 border border-pink-500/40"><div><div class="font-mono text-sm text-white">${esc(c.id)}</div><div class="text-xs text-pink-400">${cpLabel(c)} · one use</div></div><button class="btn2" onclick="copyText('${esc(c.id)}')">Copy</button><button class="btn" onclick="useCoupon('${esc(c.id)}')">Use</button></div>`).join('')}</div></div>`}
+function showCoupons(){showM(cpHtml()||'<h3 class="cz g text-xl mb-2">🎟 YOUR COUPONS</h3><p class="text-sm text-gray-300">You have no coupons right now. When we send you one it will show here and at the top of the Products page.<br><span dir="rtl">لا توجد كوبونات حالياً. عند إرسال كوبون لك سيظهر هنا.</span></p>')}
+function useCoupon(c){S.form.cc=c;$('pm').classList.add('hidden');if(!S.cart.length)return toast('Add something to your bag first, then use the coupon at checkout · أضف منتجاً أولاً ثم استخدم الكوبون');go('checkout');if(S.view=='checkout')applyCoupon()}
 function vid(){const v=S.site.video;if(!v||!v.id)return '';return `<div class="rounded-2xl overflow-hidden mb-10 aspect-video w-full max-h-[70vh]"><iframe class="w-full h-full" src="https://www.youtube.com/embed/${esc(v.id)}?autoplay=1&mute=1&controls=0&loop=1&playlist=${esc(v.id)}&start=${+v.start||0}${v.end?'&end='+(+v.end):''}&rel=0&modestbranding=1" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>`}
 function cards(){const q=(S.q||'').trim().toLowerCase(),L=S.products.filter(p=>!q||[p.name,p.category,p.description].join(' ').toLowerCase().includes(q));return L.length?L.map(p=>`
  <div class="card overflow-hidden flex flex-col"><div class="cursor-pointer relative" onclick="openP('${p.id}')">${im(p.image,'aspect-square object-cover w-full')}${p.items&&p.items.length?'<span class="absolute top-2 left-2 btn !py-1">Bundle</span>':''}</div>
@@ -184,7 +201,7 @@ function cards(){const q=(S.q||'').trim().toLowerCase(),L=S.products.filter(p=>!
 function shop(){
  const none=`<div class="card p-16 text-center max-w-xl mx-auto space-y-3"><div class="text-5xl">✨</div><h2 class="cz text-3xl text-white">No items yet</h2><p class="text-sm text-gray-400">Our first pieces are being made. Follow us to be the first to know.</p>${S.site.insta?`<a class="btn inline-block" target="_blank" rel="noopener" href="${esc(safe(S.site.insta))}">Follow on Instagram</a>`:''}${S.admin?'<p class="text-xs text-pink-400">Admin: add products from the Admin dashboard.</p>':''}</div>`;
  const list=`<h1 class="cz text-4xl g text-center mb-10">THE COLLECTION</h1><input id="q" type="search" class="in max-w-md mx-auto block mb-8" placeholder="Search products..." value="${esc(S.q)}" oninput="S.q=this.value;$('grid').innerHTML=cards()"><div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">${cards()}</div>`;
- return vid()+(S.products.length?list:none)+(S.site.about?`<div class="card p-8 mt-16 text-center max-w-3xl mx-auto"><h2 class="cz text-2xl g mb-3">ABOUT US</h2><p class="text-sm text-gray-300 whitespace-pre-wrap">${esc(S.site.about)}</p></div>`:'')+nt();
+ return cpHtml()+vid()+(S.products.length?list:none)+(S.site.about?`<div class="card p-8 mt-16 text-center max-w-3xl mx-auto"><h2 class="cz text-2xl g mb-3">ABOUT US</h2><p class="text-sm text-gray-300 whitespace-pre-wrap">${esc(S.site.about)}</p></div>`:'')+nt();
 }
 
 const fv=(id,d)=>S.form[id]!=null?S.form[id]:(d??'');
@@ -228,20 +245,49 @@ function checkout(){
 }
 async function pickReceipt(e){const f=e.target.files[0];if(!f)return;try{const r=await up(f,'r',1100);if(r.length>700000)return toast('This image is too large, please upload a smaller screenshot','e');S.receipt=r;$('cRp').innerHTML=`<img src="${r}" class="mt-2 max-h-40 rounded-lg">`}catch(x){toast(x.message,'e')}}
 async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-async function ensureCid(){let c=(S.profile||{}).cid;if(c)return c;c=genCid();await db.doc('users/'+S.user.uid).set({cid:c},{merge:true});S.profile={...S.profile,cid:c};return c}
+/* A customer ID is claimed ONCE (cids/{id} can be created but never changed or deleted), then saved on the account. It never changes. */
+async function claimCid(uid,extra){
+ for(let k=0;k<6;k++){
+  const c=genCid();
+  try{const b=db.batch();b.set(db.doc('cids/'+c),{uid});b.set(db.doc('users/'+uid),{...(extra||{}),cid:c},{merge:true});await b.commit();S.profile={...(S.profile||{}),...(extra||{}),cid:c};return c}
+  catch(e){if(e.code!='permission-denied'||k==5)throw e}
+ }
+}
+async function ensureCid(){return (S.profile||{}).cid||await claimCid(S.user.uid)}
 
 const when=o=>o.createdAt?o.createdAt.toDate().toLocaleString():'';
 function orders(){
  const mine=S.orders.filter(o=>S.user&&o.uid==S.user.uid);
  if(!mine.length)return `<div class="card p-12 text-center">No orders yet.</div>`;
- return `<h1 class="cz text-3xl g mb-6">MY ORDERS</h1><div class="space-y-4">${mine.map(o=>`<div class="card p-5"><div class="flex justify-between flex-wrap gap-2"><span class="font-mono text-xs text-pink-400">${o.id}</span><span class="text-xs px-3 py-1 rounded-full border border-pink-500/40">${LBL[o.status]||o.status}</span></div>
- <p class="text-xs text-gray-400 mt-2">${when(o)} · EGP ${(+o.total).toLocaleString()}${o.shipping!=null?` (delivery ${+o.shipping?'EGP '+o.shipping:'free'})`:''} · paid by InstaPay${o.cid?' · ID '+esc(o.cid):''}</p>${o.tracking?`<p class="text-xs text-pink-400">Tracking: ${esc(o.tracking)}</p>`:''}<div class="flex gap-1 mt-3">${['Placed','Approved','Production','Shipped','Delivered'].map((n,i)=>`<div class="flex-1 text-center"><div class="h-1.5 rounded ${i<=['pending','approved','sent_to_zink','shipped','delivered'].indexOf(o.status)?'bg-pink-500':'bg-[#3B185F]'}"></div><div class="text-[9px] text-gray-500 mt-1">${n}</div></div>`).join('')}</div>
- ${o.items.map(i=>`<p class="text-sm">• ${esc(i.name)}${esc(szt(i.size))}</p>`).join('')}${o.status=='pending'?`<button class="btn2 text-red-400 mt-3" onclick="cancelOrder('${o.id}')">Cancel order</button>`:''}${o.status=='delivered'&&S.site.wa?`<a class="btn2 inline-block mt-3" target="_blank" rel="noopener" href="https://wa.me/${esc(S.site.wa)}?text=${encodeURIComponent('Return / exchange request for order '+o.id)}">Request return / exchange</a>`:''}</div>`).join('')}</div>`;
+ const steps=['pending','approved','sent_to_zink','shipped','delivered'];
+ return `<h1 class="cz text-3xl g mb-2">MY ORDERS</h1><p class="text-xs text-gray-400 mb-6">Only your own orders are shown here.${(S.profile||{}).cid?' Your customer ID: <b class="text-pink-400">'+esc(S.profile.cid)+'</b>':''}</p><div class="space-y-5">${mine.map(o=>{const c=o.customer;return `<div class="card overflow-hidden">
+  <div class="flex justify-between flex-wrap gap-2 px-5 py-3 bg-[#241040]"><div><span class="text-[10px] text-gray-500">ORDER ID</span> <span class="font-mono text-xs text-pink-400 select-text">${o.id}</span><div class="text-xs text-gray-400">${when(o)}</div></div><span class="text-xs px-3 py-1 rounded-full border border-pink-500/40 self-start">${LBL[o.status]||o.status}</span></div>
+  <div class="px-5 pt-4"><div class="flex gap-1">${['Placed','Approved','Production','Shipped','Delivered'].map((n,i)=>`<div class="flex-1 text-center"><div class="h-1.5 rounded ${i<=steps.indexOf(o.status)?'bg-pink-500':'bg-[#3B185F]'}"></div><div class="text-[9px] text-gray-500 mt-1">${n}</div></div>`).join('')}</div>${o.tracking?`<p class="text-xs text-pink-400 mt-2">Tracking: ${esc(o.tracking)}</p>`:''}</div>
+  <div class="grid md:grid-cols-3 gap-5 p-5 text-sm">
+   <div class="space-y-1"><h4 class="cz text-pink-400 text-xs tracking-widest mb-1">DELIVERY TO</h4>${lbl('Name',esc(c.name))}${lbl('Phone',esc(c.phone))}${lbl('Alt phone',esc(c.phone2))}${lbl('Governorate',esc(c.governorate))}${lbl('City / district',esc(c.city))}${lbl('Address',esc(c.address))}</div>
+   <div class="space-y-1"><h4 class="cz text-pink-400 text-xs tracking-widest mb-1">ITEMS</h4>${o.items.map(i=>`<div class="border-b border-[#3B185F] pb-1"><b class="text-white">${esc(i.name)}</b>${i.size?` <span class="text-pink-300">(${esc(i.size)})</span>`:''}<div class="text-xs text-gray-400">EGP ${esc(i.price)}</div></div>`).join('')}</div>
+   <div class="space-y-1"><h4 class="cz text-pink-400 text-xs tracking-widest mb-1">PAYMENT</h4>${lbl('Items','EGP '+(+o.total-(+o.shipping||0)+(+o.discount||0)).toLocaleString())}${o.coupon?lbl('Coupon',esc(o.coupon)+' · -EGP '+(+o.discount||0)):''}${lbl('Delivery',+o.shipping?'EGP '+o.shipping:'Free')}${lbl('Total paid','<b class="text-pink-400">EGP '+(+o.total).toLocaleString()+'</b>')}${lbl('Method','InstaPay')}${lbl('Refund to',esc(o.payerInstapay||'-'))}</div>
+  </div>
+  ${o.status=='pending'||(o.status=='delivered'&&S.site.wa)?`<div class="px-5 pb-5">${o.status=='pending'?`<button class="btn2 text-red-400" onclick="cancelOrder('${o.id}')">Cancel order</button>`:''}${o.status=='delivered'&&S.site.wa?`<a class="btn2 inline-block" target="_blank" rel="noopener" href="https://wa.me/${esc(S.site.wa)}?text=${encodeURIComponent('Return / exchange request for order '+o.id)}">Request return / exchange</a>`:''}</div>`:''}</div>`}).join('')}</div>`;
 }
 
 function admin(){
  if(!S.unlocked)return adminLock();
- return `<div class="flex justify-between items-center mb-6"><h1 class="cz text-3xl g">ADMIN DASHBOARD</h1><button class="btn2" onclick="lockAdmin()">🔒 Lock admin</button></div><div class="grid md:grid-cols-2 gap-6 mb-6">
+ const T=S.atab||'orders',pend=S.allOrders.filter(o=>o.status=='pending').length;
+ const tab=(k,l)=>`<button class="btn2 ${T==k?'border-pink-500 text-pink-400 font-bold':''}" onclick="S.atab='${k}';render();scrollTo(0,0)">${l}</button>`;
+ return `<div class="flex justify-between items-center mb-6"><h1 class="cz text-3xl g">ADMIN DASHBOARD</h1><button class="btn2" onclick="lockAdmin()">🔒 Lock admin</button></div><div class="flex flex-wrap gap-2 mb-6">${tab('orders','Orders'+(pend?' ('+pend+' waiting)':''))}${tab('accounts','Accounts ('+S.users.length+')')}${tab('coupons','Coupons')}${tab('products','Products')}${tab('settings','Settings')}</div>
+ ${T=='orders'?ordersTab():''}${T=='accounts'?accountsTab():''}
+ ${T=='coupons'?`
+<div class="card p-5 mb-6"><h3 class="cz text-white mb-1">One-time coupons</h3><p class="text-xs text-gray-400 mb-3">Every code is random, unique and works once. Pick the discount and press Generate. The easiest way to send one to a customer is the Accounts tab (press Send coupon on their card). You can also type their Customer ID or email here. Leave it empty for an open code you share yourself.</p><div class="flex flex-wrap gap-2 mb-3"><input id="kW" class="in !w-64" placeholder="Customer ID or email (empty = open code)"><select id="kT" class="in !w-auto"><option value="pct">% off</option><option value="fix">EGP off</option></select><input id="kV" type="number" min="1" class="in !w-28" placeholder="Value"><button class="btn" onclick="addCoupon()">Generate code</button></div>
+${(S.coupons||[]).map(c=>`<div class="text-sm flex justify-between items-center gap-2 border-t border-[#3B185F] py-2"><span class="font-mono">${esc(c.id)} · ${esc(c.value)}${c.type=='pct'?'%':' EGP'}${c.used?' · USED':' · unused'}${c.forName?' · for '+esc(c.forName)+' '+esc(c.forCid||''):' · open code'}</span><span>${c.used?'':`<button class="btn2" onclick="copyText('${esc(c.id)}')">Copy</button> `}<button class="btn2 text-red-400" onclick="delCoupon('${esc(c.id)}')">Delete</button></span></div>`).join('')}</div>`:''}
+ ${T=='products'?`
+<div class="card p-5 mb-6"><h3 class="cz text-white mb-3" id="pT">Add product</h3><input type="hidden" id="pId"><div class="grid sm:grid-cols-2 gap-3">
+  <input id="pN" class="in" placeholder="Name"><input id="pP" type="number" class="in" placeholder="Price EGP"><input id="pC" class="in" placeholder="Category"><input id="pS" class="in font-mono" placeholder="Zink Print SKU">
+  <textarea id="pD" class="in sm:col-span-2" rows="2" placeholder="Description"></textarea><input id="pI" type="file" accept="image/*" class="text-xs"><button class="btn" onclick="saveProd()">Save product</button></div></div>
+ <div class="card p-5 mb-6 overflow-x-auto"><h3 class="cz text-white mb-3">Products</h3><table class="w-full text-sm">${S.products.map(p=>`<tr class="border-t border-[#3B185F]"><td class="py-2">${im(p.image,'w-10 h-10 rounded object-cover')}</td><td>${esc(p.name)}</td><td class="text-pink-400">${p.price}</td><td class="font-mono text-xs">${esc(p.zinkSKU)}</td><td class="text-right"><button class="btn2" onclick="editProd('${p.id}')">Edit</button> <button class="btn2 text-red-400" onclick="delProd('${p.id}')">Delete</button></td></tr>`).join('')}</table></div>
+<div class="card p-5 mb-6"><h3 class="cz text-white mb-3">Bundles</h3><div class="grid sm:grid-cols-2 gap-3"><input id="bN" class="in" placeholder="Bundle name"><input id="bP" type="number" class="in" placeholder="Bundle price EGP"><textarea id="bD" class="in sm:col-span-2" rows="2" placeholder="Description"></textarea>
+ <div class="sm:col-span-2 flex flex-wrap gap-3">${S.products.filter(p=>!(p.items&&p.items.length)).map(p=>`<label class="text-xs flex gap-1"><input type="checkbox" class="bc" value="${p.id}">${esc(p.name)}</label>`).join('')}</div><input id="bI" type="file" accept="image/*" class="text-xs"><button class="btn" onclick="saveBundle()">Save bundle</button></div></div>`:''}
+ ${T=='settings'?`<div class="grid md:grid-cols-2 gap-6 mb-6">
  <div class="card p-5 space-y-2"><h3 class="cz text-white">Brand logo</h3><div class="flex items-center gap-4">${im(S.site.logoUrl,'w-16 h-16 rounded-full object-cover border border-pink-500')}<input type="file" accept="image/*" class="text-xs" onchange="setSite(event,'logoUrl','site')"></div><p class="text-xs text-gray-500">Saved online - visible to every visitor.</p></div>
  </div>
  ${(Date.now()-(S.site.secDone||0)>90*864e5)?`<div class="card p-4 mb-6 border-pink-500"><b class="text-pink-400">Security check due (every 90 days)</b><p class="text-xs text-gray-300 my-2">Change the passwords of your Gmail/Google, Firebase, GitHub, EmailJS and Zink accounts, make sure 2-step verification is on, and set 3 new admin codes in Firebase console (adminSecrets/codes: c1, c2, c3 and changedAt). Then press the button.</p><button class="btn" onclick="secDone()">I did it</button></div>`:`<p class="text-xs text-gray-500 mb-4">Last security check: ${new Date(S.site.secDone).toLocaleDateString()}</p>`}
@@ -263,33 +309,64 @@ function admin(){
  <input id="sMax" type="number" class="in" placeholder="Max order amount EGP (empty = no limit)" value="${S.site.maxOrder||''}">
  <input id="sE1" class="in" placeholder="EmailJS Service ID" value="${esc(S.site.ejsService)}"><input id="sE2" class="in" placeholder="EmailJS Template ID" value="${esc(S.site.ejsTemplate)}"><input id="sE3" class="in sm:col-span-2" placeholder="EmailJS Public Key (order alerts by email)" value="${esc(S.site.ejsKey)}"></div>
  <textarea id="sNotes" rows="3" class="in" placeholder="Notes shown under About us (delivery times, care tips, return policy summary)">${esc(S.site.notes)}</textarea>
- <textarea id="sLegal" rows="3" class="in" placeholder="Terms, refund and privacy policy text">${esc(S.site.legal)}</textarea><div class="flex flex-wrap gap-2"><button class="btn" onclick="saveSite()">Save website content</button><button class="btn2" onclick="testMail()">Send test email</button></div></div>
-<div class="card p-5 mb-6"><h3 class="cz text-white mb-3">Bundles</h3><div class="grid sm:grid-cols-2 gap-3"><input id="bN" class="in" placeholder="Bundle name"><input id="bP" type="number" class="in" placeholder="Bundle price EGP"><textarea id="bD" class="in sm:col-span-2" rows="2" placeholder="Description"></textarea>
- <div class="sm:col-span-2 flex flex-wrap gap-3">${S.products.filter(p=>!(p.items&&p.items.length)).map(p=>`<label class="text-xs flex gap-1"><input type="checkbox" class="bc" value="${p.id}">${esc(p.name)}</label>`).join('')}</div><input id="bI" type="file" accept="image/*" class="text-xs"><button class="btn" onclick="saveBundle()">Save bundle</button></div></div>
-<div class="card p-5 mb-6"><h3 class="cz text-white mb-1">One-time coupons</h3><p class="text-xs text-gray-400 mb-3">Every code is random, unique and works once. Pick the discount, press Generate, and send the code to one customer.</p><div class="flex flex-wrap gap-2 mb-3"><select id="kT" class="in !w-auto"><option value="pct">% off</option><option value="fix">EGP off</option></select><input id="kV" type="number" min="1" class="in !w-28" placeholder="Value"><button class="btn" onclick="addCoupon()">Generate code</button></div>${(S.coupons||[]).map(c=>`<div class="text-sm flex justify-between items-center gap-2 border-t border-[#3B185F] py-2"><span class="font-mono">${esc(c.id)} · ${esc(c.value)}${c.type=='pct'?'%':' EGP'}${c.used?' · USED':' · unused'}</span><span>${c.used?'':`<button class="btn2" onclick="copyText('${esc(c.id)}')">Copy</button> `}<button class="btn2 text-red-400" onclick="delCoupon('${esc(c.id)}')">Delete</button></span></div>`).join('')}</div>
-<div class="card p-5 mb-6"><h3 class="cz text-white mb-3" id="pT">Add product</h3><input type="hidden" id="pId"><div class="grid sm:grid-cols-2 gap-3">
-  <input id="pN" class="in" placeholder="Name"><input id="pP" type="number" class="in" placeholder="Price EGP"><input id="pC" class="in" placeholder="Category"><input id="pS" class="in font-mono" placeholder="Zink Print SKU">
-  <textarea id="pD" class="in sm:col-span-2" rows="2" placeholder="Description"></textarea><input id="pI" type="file" accept="image/*" class="text-xs"><button class="btn" onclick="saveProd()">Save product</button></div></div>
- <div class="card p-5 mb-6 overflow-x-auto"><h3 class="cz text-white mb-3">Products</h3><table class="w-full text-sm">${S.products.map(p=>`<tr class="border-t border-[#3B185F]"><td class="py-2">${im(p.image,'w-10 h-10 rounded object-cover')}</td><td>${esc(p.name)}</td><td class="text-pink-400">${p.price}</td><td class="font-mono text-xs">${esc(p.zinkSKU)}</td><td class="text-right"><button class="btn2" onclick="editProd('${p.id}')">Edit</button> <button class="btn2 text-red-400" onclick="delProd('${p.id}')">Delete</button></td></tr>`).join('')}</table></div>
- <div class="card p-5"><h3 class="cz text-white mb-3">Orders</h3><div class="space-y-3">${S.allOrders.map(o=>`<div class="p-4 rounded-xl bg-black/40 border border-[#3B185F] text-sm space-y-1">
-  <div class="flex justify-between flex-wrap gap-2"><span class="font-mono text-xs text-pink-400">${o.id}</span><span class="text-xs">${LBL[o.status]||o.status}</span></div>
-  <div><b>${esc(o.customer.name)}</b> · ${esc(o.customer.phone)} / ${esc(o.customer.phone2)} · ${when(o)}${S.allOrders.filter(x=>x.uid==o.uid&&x.status=='refused').length?` <b class="text-red-400">⚠ ${S.allOrders.filter(x=>x.uid==o.uid&&x.status=='refused').length} refused order(s) before</b>`:''} <button class="btn2 ml-2 text-red-400" onclick="blockUser('${o.uid}')">Block customer</button></div>
-  <div class="text-xs text-gray-400">${esc(o.customer.governorate)}, ${esc(o.customer.city)}, ${esc(o.customer.address)} <button class="btn2 ml-2" onclick="copyAddr('${o.id}')">Copy delivery details</button> <button class="btn2 ml-1" onclick="copyOrder('${o.id}')">Copy full order</button></div>
-  <div>Paid by InstaPay: <b class="text-pink-400">EGP ${(+o.total).toLocaleString()}</b> <span class="text-xs text-gray-400">(incl. delivery EGP ${+o.shipping||0})</span>${o.coupon?' · coupon '+esc(o.coupon):''}${(e=>{if(e===null)return '';const sh=shipFor(e,o.customer.governorate);return Math.abs(e+sh-o.total)>1?` <b class="text-red-400">⚠ differs from current prices + delivery (EGP ${e+sh}) - double-check</b>`:''})(expect(o))}</div>
-  <div class="text-xs">Customer's InstaPay (for refunds): <b class="select-text text-pink-400">${esc(o.payerInstapay||'-')}</b> · Customer ID ${esc(o.cid||'-')}${o.receiptHash&&S.allOrders.some(x=>x.id!=o.id&&x.receiptHash==o.receiptHash)?' <b class="text-red-400">⚠ this exact screenshot was used on another order</b>':''}</div>
-  ${o.receipt?`<img src="${esc(o.receipt)}" alt="receipt" class="max-h-40 rounded-lg cursor-pointer border border-[#3B185F]" onclick="showReceipt('${o.id}')">`:''}
-  <div class="text-xs text-gray-300 select-text">${o.items.map(i=>'• '+esc(i.name)+(i.size?' ('+esc(i.size)+')':'')+(i.sku?' · SKU '+esc(i.sku):'')+' · EGP '+esc(i.price)).join('<br>')}</div>
-  ${o.status=='pending'?`<div class="flex gap-2 pt-1"><button class="btn" onclick="setStatus('${o.id}','approved')">Payment checked - approve</button><button class="btn2 text-red-400" onclick="if(confirm('Reject this order / payment?'))setStatus('${o.id}','rejected')">Reject</button></div>`:''}
-  ${o.status=='approved'?`<div class="pt-1"><p class="text-xs text-gray-400 mb-1">Now place this order in your Zink Print dashboard, then mark it:</p><button class="btn" onclick="setStatus('${o.id}','sent_to_zink')">Mark as sent to Zink Print</button></div>`:''}
-  ${o.status=='sent_to_zink'?`<div class="pt-1"><button class="btn" onclick="setShip('${o.id}')">Mark shipped (add tracking)</button></div>`:''}
-  ${o.status=='shipped'?`<div class="pt-1 text-xs text-gray-400">Tracking: ${esc(o.tracking)} <button class="btn ml-2" onclick="setStatus('${o.id}','delivered')">Mark delivered</button> <button class="btn2 text-red-400" onclick="setStatus('${o.id}','refused')">Customer refused</button></div>`:''}
-  ${o.status=='delivered'?`<div class="pt-1"><button class="btn2 text-red-400" onclick="if(confirm('Mark this order as returned?'))setStatus('${o.id}','returned')">Mark returned</button></div>`:''}
-  </div>`).join('')||'<p class="text-gray-500 text-sm">No orders yet.</p>'}</div></div>`;
+ <textarea id="sLegal" rows="3" class="in" placeholder="Terms, refund and privacy policy text">${esc(S.site.legal)}</textarea><div class="flex flex-wrap gap-2"><button class="btn" onclick="saveSite()">Save website content</button><button class="btn2" onclick="testMail()">Send test email</button></div></div>`:''}`;
 }
 
+const GROUPS={pending:['pending'],progress:['approved','sent_to_zink'],shipped:['shipped'],done:['delivered'],closed:['rejected','cancelled','refused','returned']};
+const lbl=(l,v)=>`<div class="flex gap-2"><span class="text-gray-500 w-28 shrink-0">${l}</span><span class="text-white select-text break-words min-w-0">${v}</span></div>`;
+function ordersTab(){
+ const f=S.of||'all',chip=(k,l)=>{const n=k=='all'?S.allOrders.length:S.allOrders.filter(o=>GROUPS[k].includes(o.status)).length;return `<button class="btn2 ${f==k?'border-pink-500 text-pink-400 font-bold':''}" onclick="S.of='${k}';render()">${l} (${n})</button>`};
+ return `<div class="flex flex-wrap gap-2 mb-3">${chip('all','All')}${chip('pending','Waiting for you')}${chip('progress','Preparing')}${chip('shipped','Shipped')}${chip('done','Delivered')}${chip('closed','Cancelled / refused / returned')}</div>
+ <input class="in mb-4" placeholder="Search by customer name, phone, email, customer ID or order ID" value="${esc(S.oq)}" oninput="S.oq=this.value;$('ol').innerHTML=orderListHtml()">
+ <div id="ol" class="space-y-5">${orderListHtml()}</div>`}
+function orderListHtml(){
+ const q=(S.oq||'').trim().toLowerCase(),f=S.of||'all';
+ const L=S.allOrders.filter(o=>(f=='all'||GROUPS[f].includes(o.status))&&(!q||[o.id,o.cid,o.payerInstapay,o.customer.name,o.customer.phone,o.customer.phone2,o.customer.email].join(' ').toLowerCase().includes(q)));
+ return L.map(orderCard).join('')||'<p class="text-gray-500 text-sm">No orders here.</p>'}
+function orderCard(o){
+ const c=o.customer,refused=S.allOrders.filter(x=>x.uid==o.uid&&x.status=='refused').length,e=expect(o);
+ const bad=e!==null&&Math.abs(e+shipFor(e,c.governorate)-o.total)>1,dup=o.receiptHash&&S.allOrders.some(x=>x.id!=o.id&&x.receiptHash==o.receiptHash);
+ const n=S.allOrders.filter(x=>x.uid==o.uid).length;
+ return `<div class="rounded-2xl bg-black/40 border border-[#3B185F] overflow-hidden text-sm">
+  <div class="flex justify-between flex-wrap gap-2 px-4 py-3 bg-[#1A0B2E]"><div><span class="text-[10px] text-gray-500">ORDER ID</span> <span class="font-mono text-xs text-pink-400 select-text">${o.id}</span><div class="text-xs text-gray-400">${when(o)}</div></div><span class="text-xs px-3 py-1 rounded-full border border-pink-500/50 self-start">${LBL[o.status]||o.status}</span></div>
+  <div class="grid lg:grid-cols-3 gap-5 p-4">
+   <div class="space-y-1"><h4 class="cz text-pink-400 text-xs tracking-widest mb-1">CUSTOMER</h4>
+    ${lbl('Name',esc(c.name))}${lbl('Customer ID','<b class="text-pink-400">'+esc(o.cid||'-')+'</b>')}${lbl('Account email',esc(c.email||'-'))}${lbl('Phone',esc(c.phone))}${lbl('Alt phone',esc(c.phone2))}${lbl('Governorate',esc(c.governorate))}${lbl('City / district',esc(c.city))}${lbl('Address',esc(c.address))}
+    <p class="text-xs text-gray-500 pt-1">${n} order(s) from this customer${refused?` · <b class="text-red-400">⚠ ${refused} refused before</b>`:''}</p>
+    <div class="flex flex-wrap gap-2 pt-1"><button class="btn2" onclick="copyAddr('${o.id}')">Copy delivery details</button><button class="btn2" onclick="copyOrder('${o.id}')">Copy full order</button><button class="btn2 text-red-400" onclick="blockUser('${o.uid}')">Block customer</button></div></div>
+   <div class="space-y-1"><h4 class="cz text-pink-400 text-xs tracking-widest mb-1">ITEMS</h4>
+    ${o.items.map(i=>`<div class="border-b border-[#3B185F] pb-1 select-text"><b class="text-white">${esc(i.name)}</b>${i.size?` <span class="text-pink-300">(${esc(i.size)})</span>`:''}<div class="text-xs text-gray-400">EGP ${esc(i.price)}${i.sku?' · SKU '+esc(i.sku):''}</div></div>`).join('')}</div>
+   <div class="space-y-1"><h4 class="cz text-pink-400 text-xs tracking-widest mb-1">PAYMENT (INSTAPAY)</h4>
+    ${lbl('Items','EGP '+(+o.total-(+o.shipping||0)+(+o.discount||0)).toLocaleString())}${o.coupon?lbl('Coupon',esc(o.coupon)+' · -EGP '+(+o.discount||0)):''}${lbl('Delivery','EGP '+(+o.shipping||0))}${lbl('Total paid','<b class="text-pink-400 text-base">EGP '+(+o.total).toLocaleString()+'</b>')}${lbl('Refund to',esc(o.payerInstapay||'-'))}
+    ${bad?`<p class="text-xs text-red-400">⚠ differs from current prices + delivery (EGP ${e+shipFor(e,c.governorate)}) - double-check</p>`:''}${dup?'<p class="text-xs text-red-400">⚠ this exact screenshot was used on another order</p>':''}
+    ${o.receipt?`<img src="${esc(o.receipt)}" alt="receipt" class="max-h-44 rounded-lg cursor-pointer border border-[#3B185F] mt-2" onclick="showReceipt('${o.id}')">`:''}</div>
+  </div>
+  <div class="px-4 pb-4">
+  ${o.status=='pending'?`<div class="flex gap-2 pt-1"><button class="btn" onclick="setStatus('${o.id}','approved')">Payment checked - approve</button><button class="btn2 text-red-400" onclick="if(confirm('Reject this order / payment?'))setStatus('${o.id}','rejected')">Reject</button></div>`:''}
+  ${o.status=='approved'?`<div><p class="text-xs text-gray-400 mb-1">Now place this order in your Zink Print dashboard, then mark it:</p><button class="btn" onclick="setStatus('${o.id}','sent_to_zink')">Mark as sent to Zink Print</button></div>`:''}
+  ${o.status=='sent_to_zink'?`<button class="btn" onclick="setShip('${o.id}')">Mark shipped (add tracking)</button>`:''}
+  ${o.status=='shipped'?`<div class="text-xs text-gray-400">Tracking: ${esc(o.tracking)} <button class="btn ml-2" onclick="setStatus('${o.id}','delivered')">Mark delivered</button> <button class="btn2 text-red-400" onclick="setStatus('${o.id}','refused')">Customer refused</button></div>`:''}
+  ${o.status=='delivered'?`<button class="btn2 text-red-400" onclick="if(confirm('Mark this order as returned?'))setStatus('${o.id}','returned')">Mark returned</button>`:''}
+  </div></div>`}
+
+const userOrders=u=>S.allOrders.filter(o=>o.uid==u.id);
+function accountsTab(){return `<p class="text-xs text-gray-400 mb-3">Every customer who registered (${S.users.length}). A Customer ID is given once and never changes; only order IDs are new for each order.</p>
+ <input class="in mb-4" placeholder="Search name, email, phone, address or customer ID" value="${esc(S.uq)}" oninput="S.uq=this.value;$('ul').innerHTML=usersHtml()">
+ <div id="ul" class="space-y-4">${usersHtml()}</div>`}
+function usersHtml(){
+ const q=(S.uq||'').trim().toLowerCase(),L=S.users.filter(u=>!q||[u.name,u.email,u.phone,u.phone2,u.cid,u.governorate,u.city,u.address].join(' ').toLowerCase().includes(q));
+ return L.map(u=>{
+  const O=userOrders(u),spent=O.filter(o=>!GROUPS.closed.includes(o.status)).reduce((t,o)=>t+(+o.total||0),0),sent=(S.coupons||[]).filter(c=>c.forUid==u.id),last=O[0],dupId=u.cid&&S.users.some(x=>x.id!=u.id&&x.cid==u.cid);
+  return `<div class="rounded-2xl bg-black/40 border border-[#3B185F] p-4 text-sm"><div class="grid md:grid-cols-3 gap-5">
+   <div class="space-y-1"><h4 class="cz text-pink-400 text-xs tracking-widest mb-1">ACCOUNT</h4>${lbl('Name','<b>'+esc(u.name||'-')+'</b>')}${lbl('Customer ID',u.cid?'<b class="text-pink-400">'+esc(u.cid)+'</b>':'<span class="text-gray-500">not given yet (gets one at next login)</span>')}${dupId?'<p class="text-xs text-red-400">⚠ duplicate ID</p>':''}${lbl('Email',esc(u.email||'-'))}${lbl('Last login',u.lastLogin?new Date(u.lastLogin).toLocaleString('en-GB',{timeZone:'Africa/Cairo',hour12:false}):'-')}</div>
+   <div class="space-y-1"><h4 class="cz text-pink-400 text-xs tracking-widest mb-1">CONTACT &amp; ADDRESS</h4>${lbl('Phone',esc(u.phone||'-'))}${lbl('Alt phone',esc(u.phone2||'-'))}${lbl('Governorate',esc(u.governorate||'-'))}${lbl('City / district',esc(u.city||'-'))}${lbl('Address',esc(u.address||'-'))}</div>
+   <div class="space-y-1"><h4 class="cz text-pink-400 text-xs tracking-widest mb-1">ACTIVITY</h4>${lbl('Orders',O.length)}${lbl('Paid so far','EGP '+spent.toLocaleString())}${lbl('Last order',last?when(last):'-')}${lbl('Coupons sent',sent.length+' ('+sent.filter(c=>!c.used).length+' unused)')}</div></div>
+   <div class="flex flex-wrap gap-2 pt-3"><button class="btn" onclick="couponDlg('${u.id}')">🎟 Send coupon</button><button class="btn2" onclick="S.oq='${esc(u.cid||u.email||'')}';S.of='all';S.atab='orders';render();scrollTo(0,0)">See their orders</button><button class="btn2" onclick="copyUser('${u.id}')">Copy details</button></div></div>`}).join('')||'<p class="text-gray-500 text-sm">No accounts match.</p>'}
+function copyUser(id){const u=S.users.find(x=>x.id==id);if(!u)return;navigator.clipboard.writeText(['Customer ID: '+(u.cid||'-'),'Name: '+u.name,'Email: '+u.email,'Phone: '+u.phone,'Alt phone: '+u.phone2,'Address: '+[u.governorate,u.city,u.address].filter(Boolean).join(', ')].join('\n')).then(()=>toast('Copied'))}
+
 /* ===== actions ===== */
-function addCart(id,sz){if(!needOpen())return;const p=S.products.find(x=>x.id==id),v=noSize(p)?'':(sz||$('s_'+id).value);if(isCase(p)&&!MODELS.includes(v))return toast('Please choose your phone model from the list','e');S.cart.push({pid:id,name:p.name,price:+p.price,size:v,sku:skuOf(p),image:p.image,k:Math.random()});save();cartOpen()}
-function cartOpen(){const t=S.cart.reduce((a,i)=>a+i.price,0);
+function addCart(id,sz){if(!needOpen())return;const p=S.products.find(x=>x.id==id),v=noSize(p)?'':(sz||$('s_'+id).value);if(isCase(p)&&!MODELS.includes(v))return toast('Please choose your phone model from the list','e');S.cart.push({pid:id,name:p.name,price:+p.price,size:v,sku:skuOf(p),image:p.image,k:Math.random()});save();render();toast('Added to your bag ✓ · تمت الإضافة إلى الحقيبة')}
+function cartOpen(){S.bagSeen=true;try{localStorage.setItem('bah_bagseen','1')}catch(e){}const t=S.cart.reduce((a,i)=>a+i.price,0);
  $('cartBox').innerHTML=`<div class="flex justify-between mb-4"><h3 class="cz g text-xl">YOUR BAG</h3><button onclick="$('cart').classList.add('hidden')">✕</button></div>
  ${S.cart.map(i=>`<div class="flex items-center gap-3 py-3 border-t border-[#3B185F]">${im(i.image,'w-14 h-14 rounded object-cover')}<div class="flex-1 text-sm"><b>${esc(i.name)}</b><div class="text-xs text-gray-400">${i.size?esc(i.size)+' · ':''}EGP ${esc(i.price)}</div></div><button onclick="S.cart=S.cart.filter(x=>x.k!=${+i.k});save();cartOpen();render()">🗑</button></div>`).join('')||'<p class="text-gray-500 text-sm">Your bag is empty.</p>'}
  <div class="flex justify-between font-bold my-4"><span>Subtotal</span><span class="text-pink-400">EGP ${t.toLocaleString()}</span></div><p class="text-[11px] text-gray-400 -mt-2 mb-3">Delivery is added at checkout (free above EGP ${freeAbove()}).</p>
@@ -297,16 +374,17 @@ function cartOpen(){const t=S.cart.reduce((a,i)=>a+i.price,0);
  $('cart').classList.remove('hidden');render()}
 
 function authOpen(m){authMode(m);$('auth').classList.remove('hidden')}
-function authMode(m){mode=m;const r=m=='reg';$('aReg').classList.toggle('hidden',!r);$('aT').textContent=r?'Create Account':'Sign In';$('aGo').textContent=r?'Register':'Sign In';$('aSw').textContent=r?'Have an account? Sign in':'New here? Register'}
+function authMode(m){mode=m;const r=m=='reg';$('aReg').classList.toggle('hidden',!r);$('aT').textContent=r?'Create Account':'Sign In';$('aGo').textContent=r?'Register':'Sign In';$('aFp').classList.toggle('hidden',r);$('aSw').textContent=r?'Have an account? Sign in':'New here? Register'}
+async function forgotPw(){const e=$('aEmail').value.trim();if(!e)return toast('Type your email above first, then press this again','e');try{await auth.sendPasswordResetEmail(e);toast('If this email has an account, a reset link is on its way. Check your spam folder too.')}catch(x){toast(x.code=='auth/invalid-email'?'This email address is not valid':x.message,'e')}}
 async function authGo(){
  const e=$('aEmail').value.trim(),p=$('aPass').value;
  try{
   if(mode=='reg'){
-   const d={name:$('aName').value.trim(),phone:$('aPhone').value.trim(),phone2:$('aPhone2').value.trim(),governorate:$('aGov').value,city:$('aCity').value.trim(),address:$('aAddr').value.trim(),email:e,cid:genCid()};
+   const d={name:$('aName').value.trim(),phone:$('aPhone').value.trim(),phone2:$('aPhone2').value.trim(),governorate:$('aGov').value,city:$('aCity').value.trim(),address:$('aAddr').value.trim(),email:e};
    if(!d.name||!d.phone||!d.phone2||!d.governorate||!d.city||!d.address)return toast('Please fill every field, including an alternative phone','e');
    if(!okPh(d.phone)||!okPh(d.phone2))return toast('Please enter valid phone numbers (digits only, 10-15)','e');
    if(ph(d.phone)==ph(d.phone2))return toast('The alternative phone must be a different number','e');
-   const c=await auth.createUserWithEmailAndPassword(e,p);await db.doc('users/'+c.user.uid).set(d);S.profile=d;
+   S.reg=true;try{const c=await auth.createUserWithEmailAndPassword(e,p);await claimCid(c.user.uid,d)}finally{S.reg=false}
   }else await auth.signInWithEmailAndPassword(e,p);
   $('auth').classList.add('hidden');toast('Welcome!')
  }catch(x){toast(x.message,'e')}
@@ -382,7 +460,7 @@ async function delProd(id){if(confirm('Delete this product?'))await db.doc('prod
 async function setStatus(id,v){try{await db.doc('orders/'+id).update({status:v});toast('Updated')}catch(x){toast(x.message,'e')}}
 
 function side(o){const sd=$('sd');if(!o){sd.classList.add('hidden');return}const b=(l,v)=>`<button class="w-full text-left py-3 border-b border-[#3B185F] text-sm uppercase tracking-widest" onclick="side(0);go('${v}')">${l}</button>`;
- $('sdb').innerHTML=`<div class="flex justify-between mb-4"><span class="cz g text-lg">MENU</span><button onclick="side(0)">✕</button></div>${b('Products','shop')}${b('About us','about')}${b('Account','account')}${S.user?b('My orders','orders'):''}${S.admin?b('Admin dashboard','admin'):''}${S.user?`<button class="btn2 w-full mt-6" onclick="side(0);auth.signOut()">Log out</button>`:`<button class="btn w-full mt-6" onclick="side(0);authOpen('in')">Sign in / Register</button>`}`;sd.classList.remove('hidden')}
+ $('sdb').innerHTML=`<div class="flex justify-between mb-4"><span class="cz g text-lg">MENU</span><button onclick="side(0)">✕</button></div>${b('Products','shop')}${b('About us','about')}${b('Account','account')}${S.user?b('My orders','orders'):''}${S.user?`<button class="w-full text-left py-3 border-b border-[#3B185F] text-sm uppercase tracking-widest" onclick="side(0);showCoupons()">🎟 Coupons${myCps().length?' ('+myCps().length+')':''}</button>`:''}${S.admin?b('Admin dashboard','admin'):''}${S.user?`<button class="btn2 w-full mt-6" onclick="side(0);auth.signOut()">Log out</button>`:`<button class="btn w-full mt-6" onclick="side(0);authOpen('in')">Sign in / Register</button>`}`;sd.classList.remove('hidden')}
 function about(){return `<h1 class="cz text-3xl g mb-6 text-center">ABOUT US</h1><div class="card p-8 max-w-3xl mx-auto text-sm text-gray-300 whitespace-pre-wrap">${S.site.about?esc(S.site.about):'Coming soon.'}</div>${nt()}`}
 function account(){const p=S.profile||{};return `<h1 class="cz text-3xl g mb-6">MY ACCOUNT</h1><div class="card p-6 max-w-xl space-y-3"><div class="text-xs text-gray-400">${esc(S.user.email)}${p.cid?' · Customer ID '+esc(p.cid):''} ${S.admin?'<b class="text-pink-400">· Administrator</b>':''}</div>
  <div><label class="lb">Name</label><input id="uN" class="in" value="${esc(p.name)}"></div><div><label class="lb">Phone</label><input id="uP" class="in" value="${esc(p.phone)}"></div><div><label class="lb">Alternative phone</label><input id="uP2" class="in" value="${esc(p.phone2)}"></div>
@@ -397,17 +475,30 @@ function showM(h){$('pmb').innerHTML='<button class="absolute top-3 right-4" onc
 function tilt(e,el){const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;el.style.transform=`perspective(800px) rotateY(${x*14}deg) rotateX(${-y*14}deg) scale(1.03)`}
 function openP(id){const p=S.products.find(x=>x.id==id);if(!p)return;showM(`<div class="grid md:grid-cols-2 gap-6 items-center"><div onmousemove="tilt(event,this)" onmouseleave="this.style.transform=''" style="transition:transform .1s">${im(p.image,'w-full rounded-xl')}</div><div class="space-y-3"><h2 class="cz text-2xl text-white">${esc(p.name)}</h2><p class="cz text-pink-400 text-xl">EGP ${(+p.price).toLocaleString()}</p><p class="text-sm text-gray-300">${esc(p.description)}</p>${rt(p.id)}${canRate(p.id)?`<div class="text-xs text-gray-400">Rate this product: ${[1,2,3,4,5].map(n=>`<button class="text-2xl text-pink-400" onclick="rate('${p.id}',${n})">${n<=myRate(p.id)?'★':'☆'}</button>`).join('')}</div>`:''}${p.items&&p.items.length?`<p class="text-xs text-gray-400">Includes: ${p.items.map(i=>esc((S.products.find(x=>x.id==i)||{}).name)).join(', ')}</p>`:''}${pick(p,'ps')}<button class="btn w-full py-3" onclick="addCart('${p.id}'${noSize(p)?'':`,$('ps').value`});$('pm').classList.add('hidden')">Add to bag</button></div></div>`)}
 async function applyCoupon(){const c=$('cc').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(!c)return;try{const d=await db.doc('coupons/'+c).get();if(!d.exists||!d.data().active||d.data().used)return toast('Invalid coupon','e');S.coupon={code:c,...d.data()};toast('Coupon applied');render()}catch(x){toast('Invalid coupon','e')}}
+async function makeCoupon(type,val,target){
+ const gen=()=>'BAH-'+[...crypto.getRandomValues(new Uint8Array(8))].map(n=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[n%32]).join('');
+ let c;
+ await db.runTransaction(async t=>{c=gen();const r=db.doc('coupons/'+c);if((await t.get(r)).exists)throw new Error('Code clash, please try again');t.set(r,{type,value:val,active:true,used:false,...(target||{}),createdAt:firebase.firestore.FieldValue.serverTimestamp()})});
+ return c
+}
 async function addCoupon(){
- const val=+$('kV').value,type=$('kT').value;
+ const val=+$('kV').value,type=$('kT').value,who=$('kW').value.trim();
  if(!val||val<1)return toast('Enter the discount value','e');
  if(type=='pct'&&val>100)return toast('Percent must be between 1 and 100','e');
- const gen=()=>'BAH-'+[...crypto.getRandomValues(new Uint8Array(8))].map(n=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[n%32]).join('');
  try{
-  let c;
-  await db.runTransaction(async t=>{c=gen();const r=db.doc('coupons/'+c);if((await t.get(r)).exists)throw new Error('Code clash, please press Generate again');t.set(r,{type,value:val,active:true,used:false,createdAt:firebase.firestore.FieldValue.serverTimestamp()})});
-  toast('Coupon created: '+c);prompt('Copy this one-time code:',c)
+  let target=null;
+  if(who){
+   const u=S.users.find(x=>(x.cid||'').toUpperCase()==who.toUpperCase()||(x.email||'').toLowerCase()==who.toLowerCase());
+   if(!u)return toast('No account found with this ID or email - see the Accounts tab','e');
+   target={forUid:u.id,forName:u.name||'',forCid:u.cid||''};
+  }
+  const c=await makeCoupon(type,val,target);
+  if(target)toast('Coupon '+c+' sent to '+(target.forName||who)+' - it now shows at the top of their page');else{toast('Coupon created: '+c);prompt('Copy this one-time code:',c)}
+  $('kW').value='';
  }catch(x){toast(x.message,'e')}
 }
+function couponDlg(id){const u=S.users.find(x=>x.id==id);if(!u)return;showM(`<h3 class="cz g text-xl mb-1">Send a coupon</h3><p class="text-sm text-gray-300 mb-4">To <b class="text-white">${esc(u.name)}</b> · ${esc(u.email||'')} · ID ${esc(u.cid||'-')}</p><div class="flex flex-wrap gap-2"><select id="dT" class="in !w-auto"><option value="pct">% off</option><option value="fix">EGP off</option></select><input id="dV" type="number" min="1" class="in !w-32" placeholder="Value"><button class="btn" onclick="sendCoupon('${esc(u.id)}')">Send coupon</button></div><p class="text-xs text-gray-500 mt-3">It appears at the top of this customer's Products page and works once.</p>`)}
+async function sendCoupon(id){const u=S.users.find(x=>x.id==id),val=+$('dV').value,type=$('dT').value;if(!u)return;if(!val||val<1)return toast('Enter the discount value','e');if(type=='pct'&&val>100)return toast('Percent must be between 1 and 100','e');try{const c=await makeCoupon(type,val,{forUid:u.id,forName:u.name||'',forCid:u.cid||''});$('pm').classList.add('hidden');toast('Coupon '+c+' sent to '+(u.name||u.email))}catch(x){toast(x.message,'e')}}
 async function delCoupon(c){if(confirm('Delete coupon?'))await db.doc('coupons/'+c).delete()}
 async function saveSite(){const u=$('sVid').value.trim(),m=u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);try{await db.doc('settings/site').set({about:$('sAbout').value,insta:$('sInsta').value.trim(),yt:$('sYt').value.trim(),tt:$('sTt').value.trim(),notes:$('sNotes').value,wa:$('sWa').value.replace(/\D/g,''),legal:$('sLegal').value,maxOrder:+$('sMax').value||0,ejsService:$('sE1').value.trim(),ejsTemplate:$('sE2').value.trim(),ejsKey:$('sE3').value.trim(),video:{id:m?m[1]:'',url:u,start:+$('sVs').value||0,end:+$('sVe').value||0}},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
 async function saveBundle(){const f=$('bI').files[0],items=[...document.querySelectorAll('.bc:checked')].map(c=>c.value);if(!$('bN').value.trim()||!+$('bP').value||items.length<2)return toast('Name, price and at least 2 products needed','e');try{await db.collection('products').add({name:$('bN').value.trim(),price:+$('bP').value,category:'Bundle',description:$('bD').value.trim(),zinkSKU:'',items,image:f?await up(f,'p',700):''});toast('Bundle saved')}catch(x){toast(x.message,'e')}}
