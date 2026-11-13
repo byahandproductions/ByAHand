@@ -2,13 +2,13 @@
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="referrer" content="strict-origin-when-cross-origin">
 <title>By A Hand</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600&family=Cairo:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
 <style>
-body{font-family:'Plus Jakarta Sans',sans-serif;background:#0F051D;color:#F3E8FF}
+body{font-family:'Plus Jakarta Sans','Cairo',sans-serif;background:#0F051D;color:#F3E8FF}
 .cz{font-family:Cinzel,serif}
 .g{background:linear-gradient(135deg,#EC4899,#F9A8D4,#DB2777);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .btn{background:linear-gradient(135deg,#EC4899,#DB2777);color:#fff;font-weight:600;border-radius:.75rem;padding:.6rem 1rem;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase}
@@ -77,6 +77,21 @@ button,a,input,select,textarea,label{touch-action:manipulation;-webkit-tap-highl
  #ft{padding-bottom:calc(6rem + env(safe-area-inset-bottom))!important}
 }
 @media(max-width:380px){#hdr .text-\[10px\]{display:none}}
+
+/* ===== product description + photo gallery ===== */
+.desc{font-size:1rem;line-height:1.85;color:#EADCFB}
+.desc p{margin:0 0 .9rem}
+.desc ul{list-style:none;margin:0 0 1rem;padding:0}
+.desc li{position:relative;padding:.35rem 1.4rem .35rem 0;padding-inline-start:1.4rem;padding-inline-end:0}
+.desc li::before{content:"\2740";position:absolute;inset-inline-start:0;top:.35rem;color:#EC4899;font-size:.85rem}
+.desc [dir=rtl]{font-size:1.08rem;line-height:2}
+.gmain{position:relative;touch-action:pan-y}
+.garr{position:absolute;top:50%;transform:translateY(-50%);width:2.4rem;height:2.4rem;border-radius:9999px;background:#0F051Dcc;color:#fff;font-size:1.3rem;display:flex;align-items:center;justify-content:center;border:1px solid #3B185F}
+.garr:hover{border-color:#EC4899}
+.gcount{position:absolute;bottom:.6rem;right:.6rem;background:#0F051Dcc;color:#fff;font-size:.7rem;padding:.15rem .55rem;border-radius:9999px}
+.gth{display:flex;gap:.5rem;margin-top:.6rem;overflow-x:auto;padding-bottom:.25rem}
+.gth img{width:3.6rem;height:3.6rem;object-fit:cover;border-radius:.6rem;border:2px solid transparent;opacity:.6;cursor:pointer;flex:none}
+.gth img.on{border-color:#EC4899;opacity:1}
 </style></head>
 <body>
 <header class="sticky top-0 z-40 bg-[#0F051D]/90 backdrop-blur border-b border-[#3B185F]">
@@ -339,10 +354,10 @@ ${(S.coupons||[]).map(c=>`<div class="text-sm flex justify-between items-center 
  ${T=='products'?`
 <div class="card p-5 mb-6"><h3 class="cz text-white mb-3" id="pT">Add product</h3><input type="hidden" id="pId"><div class="grid sm:grid-cols-2 gap-3">
   <input id="pN" class="in" placeholder="Name"><input id="pP" type="number" class="in" placeholder="Price EGP"><input id="pC" class="in" placeholder="Category"><input id="pS" class="in font-mono" placeholder="Zink Print SKU">
-  <textarea id="pD" class="in sm:col-span-2" rows="2" placeholder="Description"></textarea><input id="pI" type="file" accept="image/*" class="text-xs"><button class="btn" onclick="saveProd()">Save product</button></div></div>
+  <textarea id="pD" class="in sm:col-span-2" rows="2" placeholder="Description"></textarea><div class="sm:col-span-2"><label class="lb">Photos (first one is the main photo - you can add up to 6)</label><input id="pI" type="file" accept="image/*" multiple class="text-xs" onchange="pickImgs(event)"><div id="pImgs" class="flex flex-wrap gap-3 mt-3">${pImgsHtml()}</div></div><button class="btn" onclick="saveProd()">Save product</button></div></div>
  <div class="card p-5 mb-6 overflow-x-auto"><h3 class="cz text-white mb-3">Products</h3><table class="w-full text-sm">${S.products.map(p=>`<tr class="border-t border-[#3B185F]"><td class="py-2">${im(p.image,'w-10 h-10 rounded object-cover')}</td><td>${esc(p.name)}</td><td class="text-pink-400">${p.price}</td><td class="font-mono text-xs">${esc(p.zinkSKU)}</td><td class="text-right"><button class="btn2" onclick="editProd('${p.id}')">Edit</button> <button class="btn2 text-red-400" onclick="delProd('${p.id}')">Delete</button></td></tr>`).join('')}</table></div>
 <div class="card p-5 mb-6"><h3 class="cz text-white mb-3">Bundles</h3><div class="grid sm:grid-cols-2 gap-3"><input id="bN" class="in" placeholder="Bundle name"><input id="bP" type="number" class="in" placeholder="Bundle price EGP"><textarea id="bD" class="in sm:col-span-2" rows="2" placeholder="Description"></textarea>
- <div class="sm:col-span-2 flex flex-wrap gap-3">${S.products.filter(p=>!(p.items&&p.items.length)).map(p=>`<label class="text-xs flex gap-1"><input type="checkbox" class="bc" value="${p.id}">${esc(p.name)}</label>`).join('')}</div><input id="bI" type="file" accept="image/*" class="text-xs"><button class="btn" onclick="saveBundle()">Save bundle</button></div></div>`:''}
+ <div class="sm:col-span-2 flex flex-wrap gap-3">${S.products.filter(p=>!(p.items&&p.items.length)).map(p=>`<label class="text-xs flex gap-1"><input type="checkbox" class="bc" value="${p.id}">${esc(p.name)}</label>`).join('')}</div><input id="bI" type="file" accept="image/*" multiple class="text-xs"><button class="btn" onclick="saveBundle()">Save bundle</button></div></div>`:''}
  ${T=='settings'?`<div class="grid md:grid-cols-2 gap-6 mb-6">
  <div class="card p-5 space-y-2"><h3 class="cz text-white">Brand logo</h3><div class="flex items-center gap-4">${im(S.site.logoUrl,'w-16 h-16 rounded-full object-cover border border-pink-500')}<input type="file" accept="image/*" class="text-xs" onchange="setSite(event,'logoUrl','site')"></div><p class="text-xs text-gray-500">Saved online - visible to every visitor.</p></div>
  </div>
@@ -507,16 +522,24 @@ async function saveStore(){
 function showReceipt(id){const o=S.allOrders.find(x=>x.id==id);if(o&&o.receipt)showM(`<img src="${esc(o.receipt)}" class="w-full rounded-xl" alt="receipt">`)}
 
 async function setSite(e,k,doc){const f=e.target.files[0];if(!f)return;try{const u=await up(f,'s',k=='qrUrl'?600:300);await db.doc('settings/'+doc).set({[k]:u},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
+const pImgsHtml=()=>(S.pImgs||[]).map((s,i)=>`<div class="relative text-center"><img src="${esc(s)}" class="w-16 h-16 rounded object-cover border-2 ${i?'border-[#3B185F]':'border-pink-500'}"><button type="button" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 text-xs leading-5" onclick="rmImg(${i})" aria-label="Remove photo">\u2715</button>${i?`<button type="button" class="text-[10px] text-pink-400 mt-1" onclick="mainImg(${i})">make main</button>`:'<div class="text-[10px] text-pink-400 mt-1">main</div>'}</div>`).join('');
+const drawPImgs=()=>{const e=$('pImgs');if(e)e.innerHTML=pImgsHtml()};
+async function pickImgs(e){const fs=[...e.target.files];S.pImgs=S.pImgs||[];try{for(const f of fs){if(S.pImgs.length>=6){toast('Maximum 6 photos per product','e');break}S.pImgs.push(await up(f,'p',700))}}catch(x){toast(x.message,'e')}e.target.value='';drawPImgs()}
+function rmImg(i){S.pImgs.splice(i,1);drawPImgs()}
+function mainImg(i){const [x]=S.pImgs.splice(i,1);S.pImgs.unshift(x);drawPImgs()}
 async function saveProd(){
- const id=$('pId').value,old=S.products.find(p=>p.id==id),f=$('pI').files[0];
+ const id=$('pId').value,old=S.products.find(p=>p.id==id);
  try{
-  const d={name:$('pN').value.trim(),price:+$('pP').value,category:$('pC').value.trim(),zinkSKU:$('pS').value.trim(),description:$('pD').value.trim(),image:old?.image||''};
-  if(!d.name||!d.price||!d.zinkSKU)return toast('Name, price and SKU are required','e');
-  if(f)d.image=await up(f,'p',700);
-  id?await db.doc('products/'+id).set(d):await db.collection('products').add(d);toast('Product saved')
+  const imgs=[...(S.pImgs||[])];
+  const d={name:$('pN').value.trim(),price:+$('pP').value,category:$('pC').value.trim(),zinkSKU:$('pS').value.trim(),description:$('pD').value.trim(),image:imgs[0]||'',images:imgs};
+  if(old&&old.items&&old.items.length)d.items=old.items;
+  if(!d.name||!d.price||(!d.zinkSKU&&!d.items))return toast('Name, price and SKU are required','e');
+  if(imgs.join('').length>850000)return toast('The photos are too big together - remove one or two','e');
+  id?await db.doc('products/'+id).set(d):await db.collection('products').add(d);
+  S.pImgs=[];toast('Product saved')
  }catch(x){toast(x.message,'e')}
 }
-function editProd(id){const p=S.products.find(x=>x.id==id);$('pId').value=id;$('pN').value=p.name;$('pP').value=p.price;$('pC').value=p.category;$('pS').value=p.zinkSKU;$('pD').value=p.description;$('pT').textContent='Edit product';scrollTo(0,300)}
+function editProd(id){const p=S.products.find(x=>x.id==id);$('pId').value=id;$('pN').value=p.name;$('pP').value=p.price;$('pC').value=p.category;$('pS').value=p.zinkSKU;$('pD').value=p.description;$('pT').textContent='Edit product';S.pImgs=[...imgsOf(p)];drawPImgs();scrollTo(0,300)}
 async function delProd(id){if(confirm('Delete this product?'))await db.doc('products/'+id).delete()}
 async function setStatus(id,v){try{await db.doc('orders/'+id).update({status:v});toast('Updated')}catch(x){toast(x.message,'e')}}
 
@@ -535,7 +558,13 @@ async function delAcc(){if(!confirm('Delete your account permanently? This canno
 async function rate(id,n){try{await db.doc('ratings/'+id+'_'+S.user.uid).set({pid:id,stars:n,uid:S.user.uid});toast('Thanks for rating!');openP(id)}catch(x){toast(x.message,'e')}}
 function showM(h){$('pmb').innerHTML='<button class="absolute top-3 right-4" onclick="$(\'pm\').classList.add(\'hidden\')">✕</button>'+h;$('pm').classList.remove('hidden')}
 function tilt(e,el){const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;el.style.transform=`perspective(800px) rotateY(${x*14}deg) rotateX(${-y*14}deg) scale(1.03)`}
-function openP(id){const p=S.products.find(x=>x.id==id);if(!p)return;showM(`<div class="grid md:grid-cols-2 gap-6 items-center"><div onmousemove="tilt(event,this)" onmouseleave="this.style.transform=''" style="transition:transform .1s">${im(p.image,'w-full rounded-xl')}</div><div class="space-y-3"><h2 class="cz text-2xl text-white">${esc(p.name)}</h2><p class="cz text-pink-400 text-xl">EGP ${(+p.price).toLocaleString()}</p><p class="text-sm text-gray-300">${esc(p.description)}</p>${rt(p.id)}${canRate(p.id)?`<div class="text-xs text-gray-400">Rate this product: ${[1,2,3,4,5].map(n=>`<button class="text-2xl text-pink-400" onclick="rate('${p.id}',${n})">${n<=myRate(p.id)?'★':'☆'}</button>`).join('')}</div>`:''}${p.items&&p.items.length?`<p class="text-xs text-gray-400">Includes: ${p.items.map(i=>esc((S.products.find(x=>x.id==i)||{}).name)).join(', ')}</p>`:''}${pick(p,'ps')}<button class="btn w-full py-3" onclick="addCart('${p.id}'${noSize(p)?'':`,$('ps').value`});$('pm').classList.add('hidden')">Add to bag</button></div></div>`)}
+const imgsOf=p=>p.images&&p.images.length?p.images:(p.image?[p.image]:[]);
+function descHtml(s){let o='',ul=false;for(const raw of String(s||'').split(/\r?\n/)){const t=raw.trim();if(!t)continue;const m=t.match(/^[-\u2022*]\s*(.*)$/);if(m){if(!ul){o+='<ul>';ul=true}o+=`<li dir="auto">${esc(m[1])}</li>`}else{if(ul){o+='</ul>';ul=false}o+=`<p dir="auto">${esc(t)}</p>`}}if(ul)o+='</ul>';return `<div class="desc">${o}</div>`}
+function gGo(i){const g=window._g;if(!g)return;const n=g.L.length;g.i=(i+n)%n;const m=$('gm');if(m)m.src=g.L[g.i];const c=$('gc');if(c)c.textContent=(g.i+1)+' / '+n;document.querySelectorAll('.gth img').forEach((e,k)=>e.classList.toggle('on',k==g.i))}
+function gTs(e){window._gx=e.changedTouches[0].clientX}
+function gTe(e){const d=e.changedTouches[0].clientX-(window._gx||0);if(Math.abs(d)>40)gGo(window._g.i+(d<0?1:-1))}
+function gal(p){const L=imgsOf(p);window._g={L,i:0};const many=L.length>1;return `<div><div class="gmain" ${many?'ontouchstart="gTs(event)" ontouchend="gTe(event)"':''}><img id="gm" src="${esc(L[0]||FALL)}" class="w-full rounded-xl" onerror="bad(this)">${many?`<button type="button" class="garr" style="left:.5rem" onclick="gGo(window._g.i-1)" aria-label="Previous photo">\u2039</button><button type="button" class="garr" style="right:.5rem" onclick="gGo(window._g.i+1)" aria-label="Next photo">\u203a</button><span id="gc" class="gcount">1 / ${L.length}</span>`:''}</div>${many?`<div class="gth">${L.map((s,k)=>`<img src="${esc(s)}" class="${k?'':'on'}" onclick="gGo(${k})" onerror="bad(this)">`).join('')}</div>`:''}</div>`}
+function openP(id){const p=S.products.find(x=>x.id==id);if(!p)return;showM(`<div class="grid md:grid-cols-2 gap-6 items-start">${gal(p)}<div class="space-y-4"><h2 class="cz text-2xl text-white leading-snug">${esc(p.name)}</h2><p class="cz text-pink-400 text-xl">EGP ${(+p.price).toLocaleString()}</p>${descHtml(p.description)}${rt(p.id)}${canRate(p.id)?`<div class="text-xs text-gray-400">Rate this product: ${[1,2,3,4,5].map(n=>`<button class="text-2xl text-pink-400" onclick="rate('${p.id}',${n})">${n<=myRate(p.id)?'\u2605':'\u2606'}</button>`).join('')}</div>`:''}${p.items&&p.items.length?`<p class="text-sm text-gray-400">Includes: ${p.items.map(i=>esc((S.products.find(x=>x.id==i)||{}).name)).join(', ')}</p>`:''}${pick(p,'ps')}<button class="btn w-full py-3" onclick="addCart('${p.id}'${noSize(p)?'':`,$('ps').value`});$('pm').classList.add('hidden')">Add to bag</button></div></div>`)}
 async function applyCoupon(){const c=$('cc').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(!c)return;try{const d=await db.doc('coupons/'+c).get();if(!d.exists||d.data().active===false||d.data().used)return toast('This coupon is invalid or already used','e');const x=d.data();if(x.forUid&&x.forUid!=S.user.uid)return toast('This coupon was sent to another customer','e');if(x.expiresAt&&x.expiresAt.toMillis&&x.expiresAt.toMillis()<Date.now())return toast('This coupon has expired','e');S.coupon={code:c,...x};S.wantCoupon=null;toast('Coupon applied');render()}catch(x){console.error(x);toast('Could not check this coupon: '+x.message,'e')}}
 async function makeCoupon(type,val,target){
  const gen=()=>'BAH-'+[...crypto.getRandomValues(new Uint8Array(8))].map(n=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[n%32]).join('');
@@ -563,7 +592,7 @@ function couponDlg(id){const u=S.users.find(x=>x.id==id);if(!u)return;showM(`<h3
 async function sendCoupon(id){const u=S.users.find(x=>x.id==id),val=+$('dV').value,type=$('dT').value;if(!u)return;if(!val||val<1)return toast('Enter the discount value','e');if(type=='pct'&&val>100)return toast('Percent must be between 1 and 100','e');try{const c=await makeCoupon(type,val,{forUid:u.id,forName:u.name||'',forCid:u.cid||''});$('pm').classList.add('hidden');toast('Coupon '+c+' sent to '+(u.name||u.email))}catch(x){toast(x.message,'e')}}
 async function delCoupon(c){if(confirm('Delete coupon?'))await db.doc('coupons/'+c).delete()}
 async function saveSite(){const u=$('sVid').value.trim(),m=u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);try{await db.doc('settings/site').set({about:$('sAbout').value,insta:$('sInsta').value.trim(),yt:$('sYt').value.trim(),tt:$('sTt').value.trim(),notes:$('sNotes').value,wa:$('sWa').value.replace(/\D/g,''),legal:$('sLegal').value,maxOrder:+$('sMax').value||0,ejsService:$('sE1').value.trim(),ejsTemplate:$('sE2').value.trim(),ejsKey:$('sE3').value.trim(),video:{id:m?m[1]:'',url:u,start:+$('sVs').value||0,end:+$('sVe').value||0}},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
-async function saveBundle(){const f=$('bI').files[0],items=[...document.querySelectorAll('.bc:checked')].map(c=>c.value);if(!$('bN').value.trim()||!+$('bP').value||items.length<2)return toast('Name, price and at least 2 products needed','e');try{await db.collection('products').add({name:$('bN').value.trim(),price:+$('bP').value,category:'Bundle',description:$('bD').value.trim(),zinkSKU:'',items,image:f?await up(f,'p',700):''});toast('Bundle saved')}catch(x){toast(x.message,'e')}}
+async function saveBundle(){const fs=[...$('bI').files].slice(0,6),items=[...document.querySelectorAll('.bc:checked')].map(c=>c.value);if(!$('bN').value.trim()||!+$('bP').value||items.length<2)return toast('Name, price and at least 2 products needed','e');try{await db.collection('products').add({name:$('bN').value.trim(),price:+$('bP').value,category:'Bundle',description:$('bD').value.trim(),zinkSKU:'',items,image:'',...await (async()=>{const L=[];for(const f of fs)L.push(await up(f,'p',700));return{image:L[0]||'',images:L}})()});toast('Bundle saved')}catch(x){toast(x.message,'e')}}
 async function saveGovs(){const g=[...document.querySelectorAll('.gv:checked')].map(c=>c.value);try{await db.doc('settings/site').set({govs:g},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
 function copyAddr(id){const o=S.allOrders.find(x=>x.id==id),c=o.customer;navigator.clipboard.writeText(c.name+'\n'+c.phone+'\n'+c.governorate+', '+c.city+', '+c.address).then(()=>toast('Copied'))}
 async function secDone(){try{await db.doc('settings/site').set({secDone:Date.now()},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
