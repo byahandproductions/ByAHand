@@ -2,13 +2,14 @@
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
 <title>By A Hand</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;600&family=Noto+Sans+Arabic:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
 body{font-family:'Plus Jakarta Sans',sans-serif;background:#0F051D;color:#F3E8FF}
 .cz{font-family:Cinzel,serif}
+[lang=ar]{font-family:'Noto Sans Arabic','Plus Jakarta Sans',sans-serif}
 .g{background:linear-gradient(135deg,#EC4899,#F9A8D4,#DB2777);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .btn{background:linear-gradient(135deg,#EC4899,#DB2777);color:#fff;font-weight:600;border-radius:.75rem;padding:.6rem 1rem;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase}
 .btn:hover{box-shadow:0 0 20px #EC489999}
@@ -24,6 +25,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#0F051D;color:#F3E8FF
 <body>
 <header class="sticky top-0 z-40 bg-[#0F051D]/90 backdrop-blur border-b border-[#3B185F]">
  <div id="hdr" class="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between"></div>
+ <div id="hs" class="text-center text-xs py-1 border-t border-[#3B185F]"></div>
 </header>
 <main id="app" class="max-w-6xl mx-auto px-4 py-10 min-h-[70vh]"></main>
 <footer id="ft" class="border-t border-[#3B185F] py-8 text-center text-xs text-gray-500 space-y-2"></footer>
@@ -33,16 +35,19 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#0F051D;color:#F3E8FF
  <div class="card w-full max-w-md p-6 space-y-3 my-6">
   <div class="flex justify-between"><h3 id="aT" class="cz text-xl g">Sign In</h3><button onclick="$('auth').classList.add('hidden')">✕</button></div>
   <div id="aReg" class="hidden space-y-3">
-   <div><label class="lb">Full name</label><input id="aName" class="in"></div>
-   <div><label class="lb">Phone</label><input id="aPhone" type="tel" class="in" placeholder="Phone number"></div>
-   <div><label class="lb">Alternative phone (required)</label><input id="aPhone2" type="tel" class="in" placeholder="Another number we can reach"></div>
-   <div><label class="lb">Governorate</label><select id="aGov" class="in"><option value="">Select governorate</option></select></div>
-   <div><label class="lb">City / District</label><input id="aCity" class="in" placeholder="e.g. Nasr City"></div>
-   <div><label class="lb">Street, building, apartment</label><textarea id="aAddr" rows="2" class="in"></textarea></div>
+   <div><label class="lb">Full name · الاسم بالكامل</label><input id="aName" class="in"></div>
+   <div><label class="lb">WhatsApp phone number · رقم الواتساب</label><input id="aPhone" type="tel" class="in" placeholder="01XXXXXXXXX"></div>
+   <div><label class="lb">Alternative phone (required) · رقم هاتف بديل (مطلوب)</label><input id="aPhone2" type="tel" class="in" placeholder="Another number we can reach"></div>
+   <div><label class="lb">Governorate · المحافظة</label><select id="aGov" class="in"><option value="">Select governorate</option></select></div>
+   <div><label class="lb">City · المدينة</label><input id="aCity" class="in" placeholder="e.g. Nasr City"></div>
+   <div><label class="lb">Street, building, apartment · الشارع، العقار، الشقة</label><textarea id="aAddr" rows="2" class="in"></textarea></div>
+   <div><label class="lb">District / neighborhood (e.g. Maadi) · الحي / المنطقة (مثال: المعادي)</label><input id="aDist" class="in"></div>
+   <label class="flex gap-2 text-xs text-gray-300"><input id="aWa" type="checkbox"> I confirm the phone number above has WhatsApp. <span lang="ar" class="block text-gray-400" dir="rtl">أؤكد أن الرقم أعلاه عليه واتساب.</span></label>
   </div>
-  <div><label class="lb">Email</label><input id="aEmail" type="email" class="in"></div>
+  <div><label class="lb">Email · البريد الإلكتروني</label><input id="aEmail" type="email" class="in"></div>
   <div><label class="lb">Password (6+ characters)</label><input id="aPass" type="password" class="in"></div>
   <button id="aGo" class="btn w-full py-3" onclick="authGo()">Sign In</button>
+  <button id="aFp" class="text-xs text-gray-400 w-full" onclick="forgotPw()">Forgot password?</button>
   <button id="aSw" class="text-xs text-gray-400 w-full" onclick="authMode(mode=='in'?'reg':'in')">New here? Register</button>
  </div>
 </div>
@@ -59,7 +64,7 @@ firebase.initializeApp(FB);
 const auth=firebase.auth(),db=firebase.firestore();
 const GOV=['Cairo','Giza','Alexandria','Qalyubia','Port Said','Suez','Damietta','Dakahlia','Sharqia','Gharbia','Monufia','Kafr El Sheikh','Beheira','Ismailia','Beni Suef','Fayoum','Minya','Asyut','Sohag','Qena','Luxor','Aswan','Red Sea','New Valley','Matrouh','North Sinai','South Sinai'];
 const FALL="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%231A0B2E'/><text x='100' y='135' font-size='100' fill='%23EC4899' text-anchor='middle'>B</text></svg>";
-const LBL={pending:'Awaiting confirmation',approved:'Confirmed - preparing your order',sent_to_zink:'In production at Zink Print',rejected:'Cancelled',shipped:'On its way to you',delivered:'Delivered ✓',refused:'Delivery refused',returned:'Returned',cancelled:'Cancelled by customer'};
+const LBL={pending:'Payment under review · الدفع قيد المراجعة',approved:'Payment confirmed - preparing your order · تم تأكيد الدفع - نجهز طلبك',sent_to_zink:'In production at Zink Print · قيد التصنيع',rejected:'Payment not confirmed · لم يتم تأكيد الدفع',shipped:'On its way to you · في الطريق إليك',delivered:'Delivered ✓ · تم التسليم',refused:'Delivery refused · تم رفض الاستلام',returned:'Returned · مُرتجع',cancelled:'Cancelled by customer · ألغاه العميل'};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const bad=e=>{e.onerror=null;e.src=FALL};
@@ -68,25 +73,42 @@ const MODELS=[...new Set("other|iPhone 16 Pro Max|iPhone 16 Pro|iPhone 16|iPhone
 const isCase=p=>/case/i.test(p.category||'');
 const isCloth=p=>/cloth|apparel|shirt|tee|hood|sweat|dress|jacket|pant/i.test(p.category||'')||(p.items||[]).some(i=>{const q=S.products.find(x=>x.id==i);return q&&isCloth(q)});
 const noSize=p=>!isCase(p)&&!isCloth(p);
+const waNum=()=>{let n=String(S.site.wa||'').replace(/\D/g,'');if(n.startsWith('00'))n=n.slice(2);if(/^01\d{9}$/.test(n))n='20'+n.slice(1);return n};
+const waHi=encodeURIComponent('Hi By A Hand, I have a question');
 const szt=z=>z?' ('+z+')':'';
 const pick=(p,id)=>noSize(p)?'':isCase(p)?`<input id="${id}" list="mdl" class="in !w-auto !py-2 text-xs" placeholder="Phone model" style="min-width:9rem">`:`<select id="${id}" class="in !w-auto !py-2 text-xs">${['S','M','L','XL'].map(z=>`<option>${z}</option>`).join('')}</select>`;
 const rt=id=>{const a=(S.ratings||[]).filter(x=>x.pid==id);if(!a.length)return '';const m=a.reduce((t,x)=>t+x.stars,0)/a.length,k=Math.round(m);return `<div class="text-pink-400 text-sm">${'★'.repeat(k)}${'☆'.repeat(5-k)} <span class="text-xs text-gray-500">${m.toFixed(1)} (${a.length})</span></div>`};
 const canRate=id=>S.user&&S.orders.some(o=>o.status=='delivered'&&o.items.some(i=>i.pid==id));
 const myRate=id=>((S.ratings||[]).find(x=>x.pid==id&&S.user&&x.uid==S.user.uid)||{}).stars||0;
-const nt=()=>S.site.notes?`<div class="card p-6 mt-6 max-w-3xl mx-auto"><h3 class="cz g text-lg mb-2">NOTES</h3><p class="text-sm text-gray-300 whitespace-pre-wrap">${esc(S.site.notes)}</p></div>`:'';
+const nt=()=>S.site.notes?`<div class="card p-6 mt-6 max-w-3xl mx-auto"><h3 class="cz g text-lg mb-2">NOTES</h3><p class="text-sm text-gray-300 whitespace-pre-wrap">${esc(S.site.notes)}</p>${S.site.notesAr?`<p dir="rtl" lang="ar" class="text-sm text-gray-300 whitespace-pre-wrap mt-3">${esc(S.site.notesAr)}</p>`:''}</div>`:'';
 const safe=u=>/^https?:\/\//.test(u||'')?u:'#';
 const ph=s=>String(s||'').replace(/[\s\-()]/g,'');
 const okPh=s=>/^\+?\d{10,15}$/.test(ph(s));
-const expect=o=>{let t=0;for(const i of o.items){const p=S.products.find(x=>x.id==i.pid);if(!p)return null;t+=+p.price}let d=0;if(o.coupon){const c=(S.coupons||[]).find(x=>x.id==o.coupon);if(!c)return null;d=c.type=='pct'?Math.round(t*c.value/100):Math.min(c.value,t)}return t-d};
+const expect=o=>{let t=0;for(const i of o.items){const p=S.products.find(x=>x.id==i.pid);if(!p)return null;t+=eff(p)}let d=0;if(o.coupon){const c=(S.coupons||[]).find(x=>x.id==o.coupon);if(!c)return null;d=c.type=='pct'?Math.round(t*c.value/100):Math.min(c.value,t)}return t-d+(+o.openFee||0)};
+const eff=p=>Math.round((+p.price)*(100-(+p.discount||0))/100);
+const priceHtml=p=>`<span class="cz text-pink-400 font-bold flex-1 whitespace-nowrap">${+p.discount>0?'<s class="text-gray-500 text-xs mr-1">EGP '+(+p.price).toLocaleString()+'</s>':''}EGP ${eff(p).toLocaleString()}</span>`;
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const cairo=()=>{const f=new Intl.DateTimeFormat('en-US',{timeZone:'Africa/Cairo',weekday:'short',hour:'numeric',minute:'numeric',hourCycle:'h23'}).formatToParts(new Date()),g=t=>f.find(x=>x.type==t).value;return{d:DAYS.indexOf(g('weekday')),m:(+g('hour'))*60+(+g('minute'))}};
+const tm=x=>{const a=String(x||'').split(':').map(Number);return a.length<2||isNaN(a[0])||isNaN(a[1])?null:a[0]*60+a[1]};
+const t12=x=>{const m=tm(x);if(m===null)return '';const h=Math.floor(m/60);return ((h%12)||12)+':'+String(m%60).padStart(2,'0')+' '+(h<12?'AM':'PM')};
+const isOpen=()=>{const z=S.site;if(z.closed)return false;const a=tm(z.openTime),b=tm(z.closeTime);if(a===null||b===null)return true;const n=cairo(),ds=z.days&&z.days.length?z.days:[0,1,2,3,4,5,6];return a<=b?ds.includes(n.d)&&n.m>=a&&n.m<b:(ds.includes(n.d)&&n.m>=a)||(ds.includes((n.d+6)%7)&&n.m<b)};
+const closedMsg=()=>S.site.closed?"We're closed for now. / المتجر مغلق حاليًا.":"We're closed right now"+(S.site.openTime?' - we open at '+t12(S.site.openTime)+' (Egypt time). / المتجر مغلق حاليًا - نفتح الساعة '+t12(S.site.openTime)+' بتوقيت مصر.':'. / المتجر مغلق حاليًا.');
+const needOpen=()=>{if(isOpen())return true;toast(closedMsg()+' Please come back when we are open. / يرجى العودة وقت العمل.','e');return false};
+const ordNo=o=>'#'+o.id.slice(0,6).toUpperCase();
+const genCid=()=>'C-'+[...crypto.getRandomValues(new Uint8Array(6))].map(n=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[n%32]).join('');
+const okMob=x=>/^(\+?20|0)?1[0125]\d{8}$/.test(ph(x));
+const sha=async x=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(x)))].map(b=>b.toString(16).padStart(2,'0')).join('');
+const feeAmt=()=>S.co&&S.co.open?(S.site.openFee==null?10:+S.site.openFee):0;
+const ar=(t,c='')=>`<div dir="rtl" lang="ar" class="text-xs text-gray-400 text-right ${c}">${t}</div>`;
 const sum=()=>S.cart.reduce((a,i)=>a+i.price,0);
 const disc=s=>!S.coupon?0:S.coupon.type=='pct'?Math.round(s*S.coupon.value/100):Math.min(S.coupon.value,s);
 const govList=()=>S.site.govs&&S.site.govs.length?S.site.govs:GOV;
-const tot=()=>sum()-disc(sum());
+const tot=()=>sum()-disc(sum())+feeAmt();
 const skuOf=p=>p.items&&p.items.length?p.items.map(i=>(S.products.find(x=>x.id==i)||{}).zinkSKU).join(' + '):p.zinkSKU;
-let S={user:null,profile:null,admin:false,unlocked:false,coupons:[],site:{},products:[],orders:[],view:'shop',cart:JSON.parse(localStorage.getItem('bah_cart')||'[]')},unsubO=null,unsubC=null,mode='in';
+let S={user:null,profile:null,admin:false,unlocked:false,coupons:[],myCoupons:[],co:{},receipt:null,receiptHash:null,oq:'',q:'',site:{},products:[],orders:[],view:'shop',cart:JSON.parse(localStorage.getItem('bah_cart')||'[]')},unsubO=null,unsubC=null,unsubM=null,wasOpen=null,mode='in';
 
 function toast(m,err){const d=document.createElement('div');d.className='px-4 py-3 rounded-xl text-sm border '+(err?'bg-red-950 border-red-500 text-red-200':'bg-[#1A0B2E] border-pink-500 text-pink-300');d.textContent=m;$('toast').appendChild(d);setTimeout(()=>d.remove(),3500)}
-function up(f,p,max=700){return new Promise((ok,no)=>{const i=new Image,u=URL.createObjectURL(f);i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.72))};i.onerror=()=>no(new Error('Could not read this image'));i.src=u})}
+function up(f,p,max=700,q=.72){return new Promise((ok,no)=>{const i=new Image,u=URL.createObjectURL(f);i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',q))};i.onerror=()=>no(new Error('Could not read this image'));i.src=u})}
 const save=()=>localStorage.setItem('bah_cart',JSON.stringify(S.cart));
 const go=v=>{if(['checkout','orders','admin','account'].includes(v)&&!S.user){authOpen('in');return}if(v=='admin'&&!S.admin)return;S.view=v;$('cart').classList.add('hidden');render();scrollTo(0,0)};
 
@@ -95,17 +117,19 @@ db.doc('settings/site').onSnapshot(s=>{S.site=s.data()||{};render()});
 db.collection('ratings').onSnapshot(s=>{S.ratings=s.docs.map(d=>d.data());render()});
 db.collection('products').onSnapshot(s=>{S.products=s.docs.map(d=>({id:d.id,...d.data()}));render()});
 function startData(){
- if(unsubO){unsubO();unsubO=null}if(unsubC){unsubC();unsubC=null}
+ [unsubO,unsubC,unsubM].forEach(f=>f&&f());unsubO=unsubC=unsubM=null;
  const u=S.user;if(!u)return;
  if(S.unlocked)unsubC=db.collection('coupons').onSnapshot(c=>{S.coupons=c.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.error(e));else S.coupons=[];
+ unsubM=db.collection('coupons').where('forUid','==',u.uid).onSnapshot(c=>{S.myCoupons=c.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.error(e));
  const q=S.unlocked?db.collection('orders'):db.collection('orders').where('uid','==',u.uid);
  unsubO=q.onSnapshot(s=>{if(S.unlocked&&S.ordersLoaded)s.docChanges().forEach(c=>{if(c.type=='added')toast('🔔 New order from '+c.doc.data().customer.name)});S.ordersLoaded=true;S.orders=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));render()},e=>console.error(e));
 }
 auth.onAuthStateChanged(async u=>{
- S.user=u;S.admin=false;S.unlocked=false;S.profile=null;S.orders=[];S.coupons=[];S.ordersLoaded=false;
- if(unsubO){unsubO();unsubO=null}if(unsubC){unsubC();unsubC=null}
+ S.user=u;S.admin=false;S.unlocked=false;S.profile=null;S.orders=[];S.coupons=[];S.myCoupons=[];S.co={};S.ordersLoaded=false;
+ if(unsubO){unsubO();unsubO=null}if(unsubC){unsubC();unsubC=null}if(unsubM){unsubM();unsubM=null}
  if(u){
   S.profile=(await db.doc('users/'+u.uid).get()).data()||{};
+  if(S.profile.name&&!S.profile.cid){try{const cid=genCid();await db.doc('users/'+u.uid).set({cid},{merge:true});S.profile.cid=cid}catch(e){}}
   try{S.admin=(await db.doc('admins/'+u.uid).get()).exists}catch(e){}
   if((u.email||'').toLowerCase()=='byahandproductions@gmail.com')S.admin=true;
   /* admin is only "unlocked" if the database accepts the 3-code session */
@@ -126,49 +150,68 @@ function render(){
    <button class="btn2" onclick="cartOpen()">Bag (${S.cart.length})</button>
    ${S.user?`<button class="btn2" onclick="auth.signOut()">Sign out</button>`:`<button class="btn" onclick="authOpen('in')">Sign in</button>`}
   </div>`;
+ wasOpen=isOpen();$('hs').innerHTML=wasOpen?`<span class="text-green-400">● We're open · المتجر مفتوح${S.site.openTime&&S.site.closeTime?' · '+t12(S.site.openTime)+' - '+t12(S.site.closeTime):''}</span>`:`<span class="text-red-400">● ${esc(closedMsg())}</span>`;
  $('app').innerHTML={shop,checkout,orders,admin,about,account}[S.view]();
  const gv=$('aGov').value;$('aGov').innerHTML='<option value="">Select governorate</option>'+govList().map(g=>`<option>${g}</option>`).join('');$('aGov').value=gv;
- $('fc').innerHTML=(S.site.tt?`<a title="TikTok" class="fcb" style="background:#000;border:1px solid #fff4" target="_blank" rel="noopener" href="${esc(safe(S.site.tt))}">♪</a>`:'')+(S.site.yt?`<a title="YouTube" class="fcb" style="background:#FF0000" target="_blank" rel="noopener" href="${esc(safe(S.site.yt))}">▶</a>`:'')+(S.site.insta?`<a title="Instagram" class="fcb" style="background:linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)" target="_blank" rel="noopener" href="${esc(safe(S.site.insta))}">📷</a>`:'')+(S.site.wa?`<a title="WhatsApp" class="fcb" style="background:#25D366" target="_blank" rel="noopener" href="https://wa.me/${esc(S.site.wa)}">💬</a>`:'');
- $('ft').innerHTML=`<div class="flex justify-center gap-5 text-sm">${S.site.insta?`<a class="text-pink-400" target="_blank" rel="noopener" href="${esc(safe(S.site.insta))}">Instagram</a>`:''}${S.site.tt?`<a class="text-pink-400" target="_blank" rel="noopener" href="${esc(safe(S.site.tt))}">TikTok</a>`:''}${S.site.yt?`<a class="text-pink-400" target="_blank" rel="noopener" href="${esc(safe(S.site.yt))}">YouTube</a>`:''}${S.site.wa?`<a class="text-pink-400" target="_blank" rel="noopener" href="https://wa.me/${esc(S.site.wa)}">WhatsApp</a>`:''}${S.site.legal?`<button class="underline" onclick="showTerms()">Terms &amp; policies</button>`:''}</div><div>&copy; 2026 By A Hand</div>`;
+ $('fc').innerHTML=(S.site.tt?`<a title="TikTok" class="fcb" style="background:#000;border:1px solid #fff4" target="_blank" rel="noopener" href="${esc(safe(S.site.tt))}">♪</a>`:'')+(S.site.yt?`<a title="YouTube" class="fcb" style="background:#FF0000" target="_blank" rel="noopener" href="${esc(safe(S.site.yt))}">▶</a>`:'')+(S.site.insta?`<a title="Instagram" class="fcb" style="background:linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)" target="_blank" rel="noopener" href="${esc(safe(S.site.insta))}">📷</a>`:'')+(S.site.wa?`<a title="WhatsApp" class="fcb" style="background:#25D366" target="_blank" rel="noopener" href="https://wa.me/${waNum()}?text=${waHi}">💬</a>`:'');
+ $('ft').innerHTML=`<div class="flex justify-center gap-5 text-sm">${S.site.insta?`<a class="text-pink-400" target="_blank" rel="noopener" href="${esc(safe(S.site.insta))}">Instagram</a>`:''}${S.site.tt?`<a class="text-pink-400" target="_blank" rel="noopener" href="${esc(safe(S.site.tt))}">TikTok</a>`:''}${S.site.yt?`<a class="text-pink-400" target="_blank" rel="noopener" href="${esc(safe(S.site.yt))}">YouTube</a>`:''}${S.site.wa?`<a class="text-pink-400" target="_blank" rel="noopener" href="https://wa.me/${waNum()}?text=${waHi}">WhatsApp</a>`:''}<button class="underline" onclick="showTerms()">Terms &amp; policies · الشروط والسياسات</button></div><div>&copy; 2026 By A Hand</div>`;
 }
 
 function vid(){const v=S.site.video;if(!v||!v.id)return '';return `<div class="rounded-2xl overflow-hidden mb-10 aspect-video w-full max-h-[70vh]"><iframe class="w-full h-full" src="https://www.youtube.com/embed/${esc(v.id)}?autoplay=1&mute=1&controls=0&loop=1&playlist=${esc(v.id)}&start=${+v.start||0}${v.end?'&end='+(+v.end):''}&rel=0&modestbranding=1" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>`}
 function cards(){const q=(S.q||'').trim().toLowerCase(),L=S.products.filter(p=>!q||[p.name,p.category,p.description].join(' ').toLowerCase().includes(q));return L.length?L.map(p=>`
- <div class="card overflow-hidden flex flex-col"><div class="cursor-pointer relative" onclick="openP('${p.id}')">${im(p.image,'aspect-square object-cover w-full')}${p.items&&p.items.length?'<span class="absolute top-2 left-2 btn !py-1">Bundle</span>':''}</div>
+ <div class="card overflow-hidden flex flex-col"><div class="cursor-pointer relative" onclick="openP('${p.id}')">${im(p.image,'aspect-square object-cover w-full')}${p.items&&p.items.length?'<span class="absolute top-2 left-2 btn !py-1">Bundle</span>':''}${+p.discount>0?`<span class="absolute top-2 right-2 btn !py-1">-${+p.discount}%</span>`:''}</div>
   <div class="p-4 flex-1"><div class="text-[10px] uppercase tracking-widest text-pink-400">${esc(p.category)}</div><h3 class="cz font-bold text-white">${esc(p.name)}</h3>${rt(p.id)}<p class="text-xs text-gray-400 mt-1">${esc(p.description)}</p></div>
-  <div class="p-4 pt-0 flex flex-wrap items-center gap-2"><span class="cz text-pink-400 font-bold flex-1 whitespace-nowrap">EGP ${(+p.price).toLocaleString()}</span>
+  <div class="p-4 pt-0 flex flex-wrap items-center gap-2">${priceHtml(p)}
    ${pick(p,'s_'+p.id)}
-   <button class="btn" onclick="addCart('${p.id}')">Add</button></div></div>`).join(''):'<p class="text-center text-gray-400 text-sm col-span-full">No products match your search.</p>'}
+   <button class="btn ${isOpen()?'':'opacity-50'}" onclick="addCart('${p.id}')">Add</button></div></div>`).join(''):'<p class="text-center text-gray-400 text-sm col-span-full">No products match your search.</p>'}
 function shop(){
  const none=`<div class="card p-16 text-center max-w-xl mx-auto space-y-3"><div class="text-5xl">✨</div><h2 class="cz text-3xl text-white">No items yet</h2><p class="text-sm text-gray-400">Our first pieces are being made. Follow us to be the first to know.</p>${S.site.insta?`<a class="btn inline-block" target="_blank" rel="noopener" href="${esc(safe(S.site.insta))}">Follow on Instagram</a>`:''}${S.admin?'<p class="text-xs text-pink-400">Admin: add products from the Admin dashboard.</p>':''}</div>`;
  const list=`<h1 class="cz text-4xl g text-center mb-10">THE COLLECTION</h1><input id="q" type="search" class="in max-w-md mx-auto block mb-8" placeholder="Search products..." value="${esc(S.q)}" oninput="S.q=this.value;$('grid').innerHTML=cards()"><div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">${cards()}</div>`;
- return vid()+(S.products.length?list:none)+(S.site.about?`<div class="card p-8 mt-16 text-center max-w-3xl mx-auto"><h2 class="cz text-2xl g mb-3">ABOUT US</h2><p class="text-sm text-gray-300 whitespace-pre-wrap">${esc(S.site.about)}</p></div>`:'')+nt();
+ return vid()+(S.products.length?list:none)+(S.site.about?`<div class="card p-8 mt-16 text-center max-w-3xl mx-auto"><h2 class="cz text-2xl g mb-3">ABOUT US</h2><p class="text-sm text-gray-300 whitespace-pre-wrap">${esc(S.site.about)}</p>${S.site.aboutAr?`<p dir="rtl" lang="ar" class="text-sm text-gray-300 whitespace-pre-wrap mt-3">${esc(S.site.aboutAr)}</p>`:''}</div>`:'')+nt();
 }
 
 function checkout(){
- const sub=sum(),t=sub-disc(sub),p=S.profile||{};
  if(!S.cart.length)return `<div class="card p-12 text-center">Your bag is empty.</div>`;
- return `<h1 class="cz text-3xl g mb-6">CHECKOUT</h1><div class="grid md:grid-cols-2 gap-6">
- <div class="card p-6 space-y-3"><h3 class="cz text-white">1. Delivery</h3>
-  <div><label class="lb">Name</label><input id="cN" class="in" value="${esc(p.name)}"></div>
-  <div><label class="lb">Phone</label><input id="cP" class="in" value="${esc(p.phone)}"></div>
-  <div><label class="lb">Alternative phone (required)</label><input id="cP2" class="in" value="${esc(p.phone2)}"></div>
-  <div><label class="lb">Governorate</label><select id="cG" class="in">${govList().map(g=>`<option ${g==p.governorate?'selected':''}>${g}</option>`).join('')}</select></div>
-  <div><label class="lb">City / District</label><input id="cC" class="in" value="${esc(p.city)}"></div>
-  <div><label class="lb">Address</label><textarea id="cA" rows="2" class="in">${esc(p.address)}</textarea></div></div>
- <div class="card p-6 space-y-3"><h3 class="cz text-white">2. Cash on delivery</h3>
-  <p class="text-sm">You pay <b class="text-pink-400">EGP ${t.toLocaleString()}</b> in cash when your order arrives.</p>
-  <div class="flex gap-2"><input id="cc" class="in" placeholder="Coupon code"><button class="btn2" onclick="applyCoupon()">Apply</button></div>${S.coupon?`<p class="text-xs text-pink-400">Coupon ${esc(S.coupon.code)}: -EGP ${disc(sub)}</p>`:''}${S.site.maxOrder&&t>S.site.maxOrder?`<p class="text-xs text-red-400">Maximum online order is EGP ${S.site.maxOrder}. Please reduce your bag.</p>`:''}
-  <p class="text-[11px] text-gray-400">Every item is custom printed for you. We may call or message you to confirm your order before it is made, so please keep both phones on.</p>
-  <button id="cB" class="btn w-full py-3" onclick="placeOrder()">Place order · EGP ${t.toLocaleString()}</button></div></div>`;
+ const sub=sum(),dc=disc(sub),fee=feeAmt(),t=tot(),p=S.profile||{},c=S.co,v=(k,d)=>esc(c[k]??d??''),gv=c.gov??p.governorate,fz=S.site.openFee==null?10:+S.site.openFee,ip=S.site.instaIpa,ph1=S.site.instaPhone;
+ return `<h1 class="cz text-3xl g mb-6">CHECKOUT</h1>
+ ${isOpen()?'':`<div class="card p-4 mb-6 border-red-500 text-red-300 text-sm">${esc(closedMsg())}</div>`}
+ <div class="grid md:grid-cols-2 gap-6">
+ <div class="card p-6 space-y-3"><h3 class="cz text-white">1. Delivery <span lang="ar" class="text-sm text-gray-400">· التوصيل</span></h3>
+  <div><label class="lb">Name · الاسم</label><input id="cN" class="in" value="${v('name',p.name)}" oninput="S.co.name=this.value"></div>
+  <div><label class="lb">WhatsApp phone number · رقم الواتساب</label><input id="cP" type="tel" class="in" placeholder="01XXXXXXXXX" value="${v('phone',p.phone)}" oninput="S.co.phone=this.value"></div>
+  <label class="flex gap-2 text-xs text-gray-300"><input id="cW" type="checkbox" ${c.wa?'checked':''} onchange="S.co.wa=this.checked"> I confirm this number has WhatsApp. We confirm your order and delivery there.</label>${ar('أؤكد أن هذا الرقم عليه واتساب. نؤكد الطلب والتوصيل من خلاله.')}
+  <div><label class="lb">Alternative phone (required) · رقم هاتف بديل (مطلوب)</label><input id="cP2" type="tel" class="in" value="${v('phone2',p.phone2)}" oninput="S.co.phone2=this.value"></div>
+  <div><label class="lb">Governorate · المحافظة</label><select id="cG" class="in" onchange="S.co.gov=this.value">${govList().map(g=>`<option ${g==gv?'selected':''}>${g}</option>`).join('')}</select></div>
+  <div><label class="lb">City · المدينة</label><input id="cC" class="in" value="${v('city',p.city)}" oninput="S.co.city=this.value"></div>
+  <div><label class="lb">Address (street, building, apartment) · العنوان (الشارع، العقار، الشقة)</label><textarea id="cA" rows="2" class="in" oninput="S.co.address=this.value">${v('address',p.address)}</textarea></div>
+  <div><label class="lb">District / neighborhood (e.g. Maadi) · الحي / المنطقة (مثال: المعادي)</label><input id="cD" class="in" value="${v('district',p.district)}" oninput="S.co.district=this.value"></div></div>
+ <div class="card p-6 space-y-3"><h3 class="cz text-white">2. Order summary <span lang="ar" class="text-sm text-gray-400">· ملخص الطلب</span></h3>
+  <div class="flex gap-2"><input id="cc" class="in" placeholder="Coupon code"><button class="btn2" onclick="applyCoupon()">Apply</button></div>${S.coupon?`<p class="text-xs text-pink-400">Coupon ${esc(S.coupon.code)}: -EGP ${dc}</p>`:''}
+  <label class="flex gap-2 text-sm"><input id="cO" type="checkbox" ${c.open?'checked':''} onchange="S.co.open=this.checked;render()"> I want to open the package before receiving it (+EGP ${fz})</label>${ar(`أرغب في فتح الطرد قبل الاستلام (+${fz} جنيه)`)}
+  <div class="text-sm space-y-1 border-t border-[#3B185F] pt-3"><div class="flex justify-between"><span>Items</span><span>EGP ${sub.toLocaleString()}</span></div>${dc?`<div class="flex justify-between text-pink-400"><span>Coupon</span><span>-EGP ${dc}</span></div>`:''}${fee?`<div class="flex justify-between"><span>Open package</span><span>+EGP ${fee}</span></div>`:''}<div class="flex justify-between font-bold"><span>Total to pay</span><span class="text-pink-400">EGP ${t.toLocaleString()}</span></div></div>
+  <p class="text-[11px] text-gray-400">Delivery: your order arrives within <b>${esc(S.site.deliveryWindow||'5-10 working days')}</b> after we confirm your payment.</p>${ar(`يصل طلبك خلال <b>${esc(S.site.deliveryWindow||'5-10 working days')}</b> من تأكيد الدفع.`)}</div></div>
+ <div class="card p-6 mt-6"><h3 class="cz text-white mb-1">3. Pay with InstaPay, then send your receipt <span lang="ar" class="text-sm text-gray-400">· ادفع عبر إنستاباي ثم أرسل الإيصال</span></h3>
+  <p class="text-xs text-gray-400 mb-4">You must pay first. Your order is only placed after you upload the receipt screenshot, and it starts once we confirm your payment.</p>${ar('يجب الدفع أولًا. لا يتم تسجيل طلبك إلا بعد رفع صورة إيصال الدفع، ويبدأ التنفيذ بعد تأكيدنا للدفع.','mb-4')}
+  <div class="grid sm:grid-cols-2 gap-6 items-start">
+   <div class="text-center space-y-2"><div class="text-sm">Amount to pay · المبلغ المطلوب: <b class="text-pink-400">EGP ${t.toLocaleString()}</b></div>
+    ${S.site.qrUrl?`<img src="${esc(S.site.qrUrl)}" class="mx-auto w-56 rounded-xl bg-white p-2 cursor-pointer" onclick="showQr()" alt="InstaPay QR">`:'<p class="text-xs text-gray-500">InstaPay QR coming soon</p>'}${S.site.qrUrl?'<div class="text-[11px] text-gray-500">Tap to enlarge · اضغط للتكبير</div>':''}
+    ${ip?`<div class="text-xs">InstaPay address · عنوان إنستاباي: <b class="select-text">${esc(ip)}</b> <button class="btn2 ml-1" onclick="copyText('${esc(ip)}')">Copy</button></div>`:''}
+    ${ph1?`<div class="text-xs">InstaPay phone · رقم إنستاباي: <b class="select-text">${esc(ph1)}</b> <button class="btn2 ml-1" onclick="copyText('${esc(ph1)}')">Copy</button></div>`:''}</div>
+   <div class="space-y-2"><label class="lb">Receipt screenshot (required) · صورة الإيصال (مطلوبة)</label><input id="cR" type="file" accept="image/*" class="text-xs" onchange="pickReceipt(this)">
+    ${S.receipt?`<img src="${S.receipt}" class="rounded-xl max-h-72 mx-auto border border-[#3B185F]" alt="Your receipt">`:'<p class="text-xs text-gray-500">No receipt yet.</p>'}</div></div></div>
+ <div class="card p-6 mt-6 space-y-3"><h3 class="cz text-white">4. Confirm <span lang="ar" class="text-sm text-gray-400">· التأكيد</span></h3>
+  <label class="flex gap-2 text-sm"><input id="cK" type="checkbox" ${c.items?'checked':''} onchange="S.co.items=this.checked"> I double-checked my items, sizes and phone model. I understand there is no take-back if I chose wrong.</label>${ar('راجعت منتجاتي ومقاساتي وموديل هاتفي جيدًا، وأفهم أنه لا يمكن الإرجاع أو الاستبدال في حالة الاختيار الخاطئ.')}
+  <p class="text-xs text-gray-400">By placing this order you accept our <button class="underline text-pink-400" onclick="showTerms()">Terms &amp; policies</button>.</p>${ar('بإتمام الطلب فإنك توافق على الشروط والسياسات.')}
+  <button id="cB" class="btn w-full py-3 ${S.receipt?'':'opacity-50'}" onclick="placeOrder()">Place order · تأكيد الطلب · EGP ${t.toLocaleString()}</button></div>`;
 }
 
 const when=o=>o.createdAt?o.createdAt.toDate().toLocaleString():'';
 function orders(){
- if(!S.orders.length)return `<div class="card p-12 text-center">No orders yet.</div>`;
- return `<h1 class="cz text-3xl g mb-6">MY ORDERS</h1><div class="space-y-4">${S.orders.map(o=>`<div class="card p-5"><div class="flex justify-between flex-wrap gap-2"><span class="font-mono text-xs text-pink-400">${o.id}</span><span class="text-xs px-3 py-1 rounded-full border border-pink-500/40">${LBL[o.status]||o.status}</span></div>
- <p class="text-xs text-gray-400 mt-2">${when(o)} · EGP ${(+o.total).toLocaleString()}</p>${o.tracking?`<p class="text-xs text-pink-400">Tracking: ${esc(o.tracking)}</p>`:''}<div class="flex gap-1 mt-3">${['Placed','Approved','Production','Shipped','Delivered'].map((n,i)=>`<div class="flex-1 text-center"><div class="h-1.5 rounded ${i<=['pending','approved','sent_to_zink','shipped','delivered'].indexOf(o.status)?'bg-pink-500':'bg-[#3B185F]'}"></div><div class="text-[9px] text-gray-500 mt-1">${n}</div></div>`).join('')}</div>
- ${o.items.map(i=>`<p class="text-sm">• ${esc(i.name)}${esc(szt(i.size))}</p>`).join('')}${o.status=='pending'?`<button class="btn2 text-red-400 mt-3" onclick="cancelOrder('${o.id}')">Cancel order</button>`:''}${o.status=='delivered'&&S.site.wa?`<a class="btn2 inline-block mt-3" target="_blank" rel="noopener" href="https://wa.me/${esc(S.site.wa)}?text=${encodeURIComponent('Return / exchange request for order '+o.id)}">Request return / exchange</a>`:''}</div>`).join('')}</div>`;
+ const idc=`<div class="card p-4 mb-4 text-sm">Your customer ID: <b class="font-mono text-pink-400 select-text">${esc((S.profile||{}).cid||'-')}</b> <span class="text-xs text-gray-400">- quote it when you contact us on WhatsApp.</span></div>`;
+ if(!S.orders.length)return `<h1 class="cz text-3xl g mb-6">MY ORDERS</h1>`+idc+`<div class="card p-12 text-center">No orders yet.</div>`;
+ return `<h1 class="cz text-3xl g mb-6">MY ORDERS</h1>`+idc+`<div class="space-y-4">${S.orders.map(o=>`<div class="card p-5"><div class="flex justify-between flex-wrap gap-2"><span class="font-mono text-xs text-pink-400">Order ${ordNo(o)}</span><span class="text-xs px-3 py-1 rounded-full border border-pink-500/40">${LBL[o.status]||o.status}</span></div>
+ <p class="text-xs text-gray-400 mt-2">${when(o)} · Paid EGP ${(+o.total).toLocaleString()}</p>${o.status=='pending'?'<p class="text-xs text-pink-300 mt-2">We received your receipt and are checking your payment. We will message you on WhatsApp once it is confirmed.</p><p dir="rtl" lang="ar" class="text-xs text-pink-300 text-right">استلمنا الإيصال ونراجع الدفع. سنراسلك على واتساب بمجرد التأكيد.</p>':''}${o.tracking?`<p class="text-xs text-pink-400">Tracking: ${esc(o.tracking)}</p>`:''}<div class="flex gap-1 mt-3">${['Placed','Paid','Production','Shipped','Delivered'].map((n,i)=>`<div class="flex-1 text-center"><div class="h-1.5 rounded ${i<=['pending','approved','sent_to_zink','shipped','delivered'].indexOf(o.status)?'bg-pink-500':'bg-[#3B185F]'}"></div><div class="text-[9px] text-gray-500 mt-1">${n}</div></div>`).join('')}</div>
+ ${o.items.map(i=>`<p class="text-sm">• ${esc(i.name)}${esc(szt(i.size))}</p>`).join('')}${o.status=='pending'?`<button class="btn2 text-red-400 mt-3" onclick="cancelOrder('${o.id}')">Cancel order</button>`:''}${o.status=='delivered'&&S.site.wa?`<a class="btn2 inline-block mt-3" target="_blank" rel="noopener" href="https://wa.me/${waNum()}?text=${encodeURIComponent('Return / exchange request for order '+o.id)}">Request return / exchange</a>`:''}</div>`).join('')}</div>`;
 }
 
 function admin(){
@@ -178,37 +221,37 @@ function admin(){
  </div>
  ${(Date.now()-(S.site.secDone||0)>90*864e5)?`<div class="card p-4 mb-6 border-pink-500"><b class="text-pink-400">Security check due (every 90 days)</b><p class="text-xs text-gray-300 my-2">Change the passwords of your Gmail/Google, Firebase, GitHub, EmailJS and Zink accounts, make sure 2-step verification is on, and set 3 new admin codes in Firebase console (adminSecrets/codes: c1, c2, c3 and changedAt). Then press the button.</p><button class="btn" onclick="secDone()">I did it</button></div>`:`<p class="text-xs text-gray-500 mb-4">Last security check: ${new Date(S.site.secDone).toLocaleDateString()}</p>`}
  <div class="card p-5 mb-6"><h3 class="cz text-white mb-1">Delivery areas</h3><p class="text-xs text-gray-400 mb-3">Tick only the governorates Zink Print delivers to (none ticked = all are shown).</p><div class="flex flex-wrap gap-3">${GOV.map(g=>`<label class="text-xs flex gap-1"><input type="checkbox" class="gv" value="${g}" ${(S.site.govs||[]).includes(g)?'checked':''}>${g}</label>`).join('')}</div><button class="btn mt-3" onclick="saveGovs()">Save delivery areas</button></div>
+<div class="card p-5 mb-6 space-y-3"><h3 class="cz text-white">Store hours, InstaPay &amp; delivery</h3>
+ <p class="text-xs text-gray-400">Times are Egypt (Cairo) time. When the store is closed nobody can add to the bag or order.</p>
+ <div class="grid sm:grid-cols-2 gap-3"><div><label class="lb">Opens at</label><input id="hO" type="time" class="in" value="${esc(S.site.openTime)}"></div><div><label class="lb">Closes at</label><input id="hC" type="time" class="in" value="${esc(S.site.closeTime)}"></div></div>
+ <div class="flex flex-wrap gap-3">${DAYS.map((d,i)=>`<label class="text-xs flex gap-1"><input type="checkbox" class="hd" value="${i}" ${(S.site.days&&S.site.days.length?S.site.days:[0,1,2,3,4,5,6]).includes(i)?'checked':''}>${d}</label>`).join('')}</div>
+ <label class="text-xs flex gap-2"><input type="checkbox" id="hX" ${S.site.closed?'checked':''}> Close the store now (holiday / break). This overrides the schedule.</label>
+ <div class="grid sm:grid-cols-2 gap-3 border-t border-[#3B185F] pt-3"><input id="pIp" class="in" placeholder="InstaPay address, e.g. name@instapay" value="${esc(S.site.instaIpa)}"><input id="pPh" class="in" placeholder="InstaPay phone number" value="${esc(S.site.instaPhone)}"><input id="pDw" class="in" placeholder="Delivery window, e.g. 5-10 working days" value="${esc(S.site.deliveryWindow)}"><input id="pOf" type="number" min="0" class="in" placeholder="Open-package fee EGP (default 10)" value="${S.site.openFee==null?'':S.site.openFee}"></div>
+ <div class="border-t border-[#3B185F] pt-3"><label class="lb">InstaPay QR code image (customers see it at checkout)</label><p class="text-xs text-gray-400 mb-2">Open your QR code in the InstaPay app, take a screenshot, crop it to the QR only, and upload it here.</p><div class="flex items-center gap-4 flex-wrap"><input type="file" accept="image/*" class="text-xs" onchange="setQr(event)">${S.site.qrUrl?`${im(S.site.qrUrl,'w-32 rounded bg-white p-1')}<button class="btn2 text-red-400" onclick="delQr()">Remove QR</button>`:'<span class="text-xs text-gray-500">No QR uploaded yet</span>'}</div></div>
+ <button class="btn" onclick="savePay()">Save store &amp; payment settings</button></div>
 <div class="card p-5 mb-6 space-y-3"><h3 class="cz text-white">Website content &amp; links</h3>
  <textarea id="sAbout" rows="3" class="in" placeholder="About us text">${esc(S.site.about)}</textarea>
- <div class="grid sm:grid-cols-2 gap-3"><input id="sInsta" class="in" placeholder="Instagram link (https://instagram.com/...)" value="${esc(S.site.insta)}"><input id="sWa" class="in" placeholder="WhatsApp number e.g. 201285374246" value="${esc(S.site.wa)}">
+ <textarea id="sAboutAr" dir="rtl" lang="ar" rows="3" class="in" placeholder="نص من نحن (بالعربية)">${esc(S.site.aboutAr)}</textarea>
+ <div class="grid sm:grid-cols-2 gap-3"><input id="sInsta" class="in" placeholder="Instagram link (https://instagram.com/...)" value="${esc(S.site.insta)}"><input id="sWa" class="in" placeholder="WhatsApp Business number with country code, e.g. 20XXXXXXXXXX" value="${esc(S.site.wa)}">
  <input id="sTt" class="in sm:col-span-2" placeholder="TikTok link" value="${esc(S.site.tt)}"><input id="sYt" class="in sm:col-span-2" placeholder="YouTube channel link" value="${esc(S.site.yt)}"><input id="sVid" class="in sm:col-span-2" placeholder="YouTube link for the top video" value="${esc((S.site.video||{}).url)}"><input id="sVs" type="number" class="in" placeholder="Clip start (seconds)" value="${(S.site.video||{}).start||''}"><input id="sVe" type="number" class="in" placeholder="Clip end (seconds)" value="${(S.site.video||{}).end||''}">
  <input id="sMax" type="number" class="in" placeholder="Max order amount EGP (empty = no limit)" value="${S.site.maxOrder||''}">
  <input id="sE1" class="in" placeholder="EmailJS Service ID" value="${esc(S.site.ejsService)}"><input id="sE2" class="in" placeholder="EmailJS Template ID" value="${esc(S.site.ejsTemplate)}"><input id="sE3" class="in sm:col-span-2" placeholder="EmailJS Public Key (order alerts by email)" value="${esc(S.site.ejsKey)}"></div>
  <textarea id="sNotes" rows="3" class="in" placeholder="Notes shown under About us (delivery times, care tips, return policy summary)">${esc(S.site.notes)}</textarea>
- <textarea id="sLegal" rows="3" class="in" placeholder="Terms, refund and privacy policy text">${esc(S.site.legal)}</textarea><button class="btn" onclick="saveSite()">Save website content</button></div>
+ <textarea id="sNotesAr" dir="rtl" lang="ar" rows="3" class="in" placeholder="الملاحظات (بالعربية)">${esc(S.site.notesAr)}</textarea>
+ <textarea id="sLegal" rows="3" class="in" placeholder="Terms, refund and privacy policy text">${esc(S.site.legal)}</textarea>
+ <textarea id="sLegalAr" dir="rtl" lang="ar" rows="3" class="in" placeholder="الشروط والسياسات (بالعربية)">${esc(S.site.legalAr)}</textarea><button class="btn" onclick="saveSite()">Save website content</button></div>
 <div class="card p-5 mb-6"><h3 class="cz text-white mb-3">Bundles</h3><div class="grid sm:grid-cols-2 gap-3"><input id="bN" class="in" placeholder="Bundle name"><input id="bP" type="number" class="in" placeholder="Bundle price EGP"><textarea id="bD" class="in sm:col-span-2" rows="2" placeholder="Description"></textarea>
  <div class="sm:col-span-2 flex flex-wrap gap-3">${S.products.filter(p=>!(p.items&&p.items.length)).map(p=>`<label class="text-xs flex gap-1"><input type="checkbox" class="bc" value="${p.id}">${esc(p.name)}</label>`).join('')}</div><input id="bI" type="file" accept="image/*" class="text-xs"><button class="btn" onclick="saveBundle()">Save bundle</button></div></div>
-<div class="card p-5 mb-6"><h3 class="cz text-white mb-1">One-time coupons</h3><p class="text-xs text-gray-400 mb-3">Every code is random, unique and works once. Pick the discount, press Generate, and send the code to one customer.</p><div class="flex flex-wrap gap-2 mb-3"><select id="kT" class="in !w-auto"><option value="pct">% off</option><option value="fix">EGP off</option></select><input id="kV" type="number" min="1" class="in !w-28" placeholder="Value"><button class="btn" onclick="addCoupon()">Generate code</button></div>${(S.coupons||[]).map(c=>`<div class="text-sm flex justify-between items-center gap-2 border-t border-[#3B185F] py-2"><span class="font-mono">${esc(c.id)} · ${esc(c.value)}${c.type=='pct'?'%':' EGP'}${c.used?' · USED':' · unused'}</span><span>${c.used?'':`<button class="btn2" onclick="copyText('${esc(c.id)}')">Copy</button> `}<button class="btn2 text-red-400" onclick="delCoupon('${esc(c.id)}')">Delete</button></span></div>`).join('')}</div>
+<div class="card p-5 mb-6"><h3 class="cz text-white mb-1">One-time coupons</h3><p class="text-xs text-gray-400 mb-3">Every code is random, unique and works once, and has a deadline. Add a Customer ID to send it to that customer's account (it shows in My Account), or leave it empty for a code you share yourself.</p><div class="flex flex-wrap gap-2 mb-3"><select id="kT" class="in !w-auto"><option value="pct">% off</option><option value="fix">EGP off</option></select><input id="kV" type="number" min="1" class="in !w-24" placeholder="Value"><input id="kD" type="number" min="1" class="in !w-28" placeholder="Valid days" value="14"><input id="kU" class="in !w-40" placeholder="Customer ID (optional)"><button class="btn" onclick="addCoupon()">Generate code</button></div>${(S.coupons||[]).map(c=>`<div class="text-sm flex justify-between items-center gap-2 border-t border-[#3B185F] py-2"><span class="font-mono">${esc(c.id)} · ${esc(c.value)}${c.type=='pct'?'%':' EGP'}${c.forCid?' · for '+esc(c.forCid):''}${c.expiresAt?' · until '+c.expiresAt.toDate().toLocaleDateString():''}${c.used?' · USED':(c.expiresAt&&c.expiresAt.toMillis()<Date.now()?' · EXPIRED':' · unused')}</span><span>${c.used?'':`<button class="btn2" onclick="copyText('${esc(c.id)}')">Copy</button> `}<button class="btn2 text-red-400" onclick="delCoupon('${esc(c.id)}')">Delete</button></span></div>`).join('')}</div>
 <div class="card p-5 mb-6"><h3 class="cz text-white mb-3" id="pT">Add product</h3><input type="hidden" id="pId"><div class="grid sm:grid-cols-2 gap-3">
-  <input id="pN" class="in" placeholder="Name"><input id="pP" type="number" class="in" placeholder="Price EGP"><input id="pC" class="in" placeholder="Category"><input id="pS" class="in font-mono" placeholder="Zink Print SKU">
+  <input id="pN" class="in" placeholder="Name"><input id="pP" type="number" class="in" placeholder="Price EGP"><input id="pC" class="in" placeholder="Category"><input id="pS" class="in font-mono" placeholder="Zink Print SKU"><input id="pDisc" type="number" min="0" max="90" class="in" placeholder="Discount % (optional, e.g. 10 or 20)">
   <textarea id="pD" class="in sm:col-span-2" rows="2" placeholder="Description"></textarea><input id="pI" type="file" accept="image/*" class="text-xs"><button class="btn" onclick="saveProd()">Save product</button></div></div>
- <div class="card p-5 mb-6 overflow-x-auto"><h3 class="cz text-white mb-3">Products</h3><table class="w-full text-sm">${S.products.map(p=>`<tr class="border-t border-[#3B185F]"><td class="py-2">${im(p.image,'w-10 h-10 rounded object-cover')}</td><td>${esc(p.name)}</td><td class="text-pink-400">${p.price}</td><td class="font-mono text-xs">${esc(p.zinkSKU)}</td><td class="text-right"><button class="btn2" onclick="editProd('${p.id}')">Edit</button> <button class="btn2 text-red-400" onclick="delProd('${p.id}')">Delete</button></td></tr>`).join('')}</table></div>
- <div class="card p-5"><h3 class="cz text-white mb-3">Orders</h3><div class="space-y-3">${S.orders.map(o=>`<div class="p-4 rounded-xl bg-black/40 border border-[#3B185F] text-sm space-y-1">
-  <div class="flex justify-between flex-wrap gap-2"><span class="font-mono text-xs text-pink-400">${o.id}</span><span class="text-xs">${LBL[o.status]||o.status}</span></div>
-  <div><b>${esc(o.customer.name)}</b> · ${esc(o.customer.phone)} / ${esc(o.customer.phone2)} · ${when(o)}${S.orders.filter(x=>x.uid==o.uid&&x.status=='refused').length?` <b class="text-red-400">⚠ ${S.orders.filter(x=>x.uid==o.uid&&x.status=='refused').length} refused order(s) before</b>`:''} <button class="btn2 ml-2 text-red-400" onclick="blockUser('${o.uid}')">Block customer</button></div>
-  <div class="text-xs text-gray-400">${esc(o.customer.governorate)}, ${esc(o.customer.city)}, ${esc(o.customer.address)} <button class="btn2 ml-2" onclick="copyAddr('${o.id}')">Copy delivery details</button> <button class="btn2 ml-1" onclick="copyOrder('${o.id}')">Copy full order</button></div>
-  <div>Cash to collect on delivery: <b class="text-pink-400">EGP ${(+o.total).toLocaleString()}</b>${o.coupon?' · coupon '+esc(o.coupon):''}${(e=>e!==null&&Math.abs(e-o.total)>1?` <b class="text-red-400">⚠ differs from current prices (EGP ${e}) - double-check</b>`:'')(expect(o))}</div>
-  <div class="text-xs text-gray-300 select-text">${o.items.map(i=>'• '+esc(i.name)+(i.size?' ('+esc(i.size)+')':'')+(i.sku?' · SKU '+esc(i.sku):'')+' · EGP '+esc(i.price)).join('<br>')}</div>
-  ${o.status=='pending'?`<div class="flex gap-2 pt-1"><button class="btn" onclick="setStatus('${o.id}','approved')">Customer confirmed - approve</button><button class="btn2 text-red-400" onclick="if(confirm('Reject this payment?'))setStatus('${o.id}','rejected')">Reject</button></div>`:''}
-  ${o.status=='approved'?`<div class="pt-1"><p class="text-xs text-gray-400 mb-1">Now place this order in your Zink Print dashboard, then mark it:</p><button class="btn" onclick="setStatus('${o.id}','sent_to_zink')">Mark as sent to Zink Print</button></div>`:''}
-  ${o.status=='sent_to_zink'?`<div class="pt-1"><button class="btn" onclick="setShip('${o.id}')">Mark shipped (add tracking)</button></div>`:''}
-  ${o.status=='shipped'?`<div class="pt-1 text-xs text-gray-400">Tracking: ${esc(o.tracking)} <button class="btn ml-2" onclick="setStatus('${o.id}','delivered')">Mark delivered</button> <button class="btn2 text-red-400" onclick="setStatus('${o.id}','refused')">Customer refused</button></div>`:''}
-  ${o.status=='delivered'?`<div class="pt-1"><button class="btn2 text-red-400" onclick="if(confirm('Mark this order as returned?'))setStatus('${o.id}','returned')">Mark returned</button></div>`:''}
-  </div>`).join('')||'<p class="text-gray-500 text-sm">No orders yet.</p>'}</div></div>`;
+ <div class="card p-5 mb-6 overflow-x-auto"><h3 class="cz text-white mb-3">Products</h3><table class="w-full text-sm">${S.products.map(p=>`<tr class="border-t border-[#3B185F]"><td class="py-2">${im(p.image,'w-10 h-10 rounded object-cover')}</td><td>${esc(p.name)}</td><td class="text-pink-400">${p.price}${+p.discount>0?' (-'+(+p.discount)+'%)':''}</td><td class="font-mono text-xs">${esc(p.zinkSKU)}</td><td class="text-right"><button class="btn2" onclick="editProd('${p.id}')">Edit</button> <button class="btn2 text-red-400" onclick="delProd('${p.id}')">Delete</button></td></tr>`).join('')}</table></div>
+ <div class="card p-5"><h3 class="cz text-white mb-3">Orders</h3><input class="in mb-3" placeholder="Search by customer ID, order number, name, phone or district" value="${esc(S.oq)}" oninput="S.oq=this.value;$('olist').innerHTML=adminOrders()"><div id="olist" class="space-y-3">${adminOrders()}</div></div>`;
 }
 
 /* ===== actions ===== */
-function addCart(id,sz){const p=S.products.find(x=>x.id==id),v=noSize(p)?'':(sz||$('s_'+id).value);if(isCase(p)&&!MODELS.includes(v))return toast('Please choose your phone model from the list','e');S.cart.push({pid:id,name:p.name,price:+p.price,size:v,sku:skuOf(p),image:p.image,k:Math.random()});save();cartOpen()}
+function addCart(id,sz){if(!needOpen())return;const p=S.products.find(x=>x.id==id),v=noSize(p)?'':(sz||$('s_'+id).value);if(isCase(p)&&!MODELS.includes(v))return toast('Please choose your phone model from the list','e');S.cart.push({pid:id,name:p.name,price:eff(p),size:v,sku:skuOf(p),image:p.image,k:Math.random()});save();cartOpen()}
 function cartOpen(){const t=S.cart.reduce((a,i)=>a+i.price,0);
  $('cartBox').innerHTML=`<div class="flex justify-between mb-4"><h3 class="cz g text-xl">YOUR BAG</h3><button onclick="$('cart').classList.add('hidden')">✕</button></div>
  ${S.cart.map(i=>`<div class="flex items-center gap-3 py-3 border-t border-[#3B185F]">${im(i.image,'w-14 h-14 rounded object-cover')}<div class="flex-1 text-sm"><b>${esc(i.name)}</b><div class="text-xs text-gray-400">${i.size?esc(i.size)+' · ':''}EGP ${esc(i.price)}</div></div><button onclick="S.cart=S.cart.filter(x=>x.k!=${+i.k});save();cartOpen();render()">🗑</button></div>`).join('')||'<p class="text-gray-500 text-sm">Your bag is empty.</p>'}
@@ -217,91 +260,108 @@ function cartOpen(){const t=S.cart.reduce((a,i)=>a+i.price,0);
  $('cart').classList.remove('hidden');render()}
 
 function authOpen(m){authMode(m);$('auth').classList.remove('hidden')}
-function authMode(m){mode=m;const r=m=='reg';$('aReg').classList.toggle('hidden',!r);$('aT').textContent=r?'Create Account':'Sign In';$('aGo').textContent=r?'Register':'Sign In';$('aSw').textContent=r?'Have an account? Sign in':'New here? Register'}
+function authMode(m){mode=m;const r=m=='reg';$('aReg').classList.toggle('hidden',!r);$('aT').textContent=r?'Create Account':'Sign In';$('aGo').textContent=r?'Register':'Sign In';$('aFp').classList.toggle('hidden',r);$('aSw').textContent=r?'Have an account? Sign in':'New here? Register'}
 async function authGo(){
  const e=$('aEmail').value.trim(),p=$('aPass').value;
  try{
   if(mode=='reg'){
-   const d={name:$('aName').value.trim(),phone:$('aPhone').value.trim(),phone2:$('aPhone2').value.trim(),governorate:$('aGov').value,city:$('aCity').value.trim(),address:$('aAddr').value.trim(),email:e};
-   if(!d.name||!d.phone||!d.phone2||!d.governorate||!d.city||!d.address)return toast('Please fill every field, including an alternative phone','e');
-   if(!okPh(d.phone)||!okPh(d.phone2))return toast('Please enter valid phone numbers (digits only, 10-15)','e');
-   if(ph(d.phone)==ph(d.phone2))return toast('The alternative phone must be a different number','e');
+   const d={name:$('aName').value.trim(),phone:$('aPhone').value.trim(),phone2:$('aPhone2').value.trim(),governorate:$('aGov').value,city:$('aCity').value.trim(),address:$('aAddr').value.trim(),district:$('aDist').value.trim(),cid:genCid(),email:e};
+   if(!d.name||!d.phone||!d.phone2||!d.governorate||!d.city||!d.address||!d.district)return toast('Please fill every field, including an alternative phone','e');
+   if(!okMob(d.phone))return toast('Enter a valid Egyptian mobile number that has WhatsApp (01XXXXXXXXX) / أدخل رقم موبايل مصري صحيح عليه واتساب','e');if(!okPh(d.phone2))return toast('Please enter a valid alternative phone number / أدخل رقم هاتف بديل صحيح','e');if(!$('aWa').checked)return toast('Please confirm this number has WhatsApp / يرجى تأكيد أن هذا الرقم عليه واتساب','e');
+   if(ph(d.phone)==ph(d.phone2))return toast('The alternative phone must be a different number / يجب أن يكون الرقم البديل مختلفًا','e');
    const c=await auth.createUserWithEmailAndPassword(e,p);await db.doc('users/'+c.user.uid).set(d);S.profile=d;
   }else await auth.signInWithEmailAndPassword(e,p);
   $('auth').classList.add('hidden');toast('Welcome!')
  }catch(x){toast(x.message,'e')}
 }
 
+async function pickReceipt(el){const f=el.files[0];if(!f)return;try{const d=await up(f,'r',900);if(d.length>700000)return toast('This image is too large, please send a smaller screenshot','e');S.receipt=d;S.receiptHash=await sha(d);render()}catch(x){toast(x.message,'e')}}
 async function placeOrder(){
- const v=id=>$(id).value.trim();
- if(!v('cN')||!v('cP')||!v('cP2')||!v('cC')||!v('cA'))return toast('Please fill every field, including an alternative phone','e');
- if(!okPh(v('cP'))||!okPh(v('cP2')))return toast('Please enter valid phone numbers (digits only, 10-15)','e');
- if(ph(v('cP'))==ph(v('cP2')))return toast('The alternative phone must be a different number','e');
- if(S.site.maxOrder&&tot()>S.site.maxOrder)return toast('Orders above EGP '+S.site.maxOrder+' are not accepted online','e');
+ if(!needOpen())return;
  if(!S.agreed)return policyGate();
+ const v=id=>$(id).value.trim();
+ if(!v('cN')||!v('cP')||!v('cP2')||!v('cC')||!v('cA')||!v('cD'))return toast('Please fill every field, including the district and an alternative phone / يرجى ملء جميع الحقول بما فيها الحي ورقم هاتف بديل','e');
+ if(!okMob(v('cP')))return toast('Enter a valid Egyptian mobile number that has WhatsApp (01XXXXXXXXX) / أدخل رقم موبايل مصري صحيح عليه واتساب','e');
+ if(!okPh(v('cP2')))return toast('Please enter a valid alternative phone number / أدخل رقم هاتف بديل صحيح','e');
+ if(ph(v('cP'))==ph(v('cP2')))return toast('The alternative phone must be a different number / يجب أن يكون الرقم البديل مختلفًا','e');
+ if(!$('cW').checked)return toast('Please confirm that your phone number has WhatsApp / يرجى تأكيد أن رقمك عليه واتساب','e');
+ if(!S.receipt)return toast('Please pay with InstaPay and upload your receipt screenshot first / يرجى الدفع عبر إنستاباي ورفع صورة الإيصال أولًا','e');
+ if(!$('cK').checked)return toast('Please confirm you double-checked your items / يرجى تأكيد أنك راجعت اختياراتك','e');
+ if(S.site.maxOrder&&tot()>S.site.maxOrder)return toast('Orders above EGP '+S.site.maxOrder+' are not accepted online','e');
  $('cB').disabled=true;
  try{
-  const customer={name:v('cN'),phone:v('cP'),phone2:v('cP2'),governorate:$('cG').value,city:v('cC'),address:v('cA'),email:S.user.email};
-  const ts=firebase.firestore.FieldValue.serverTimestamp(),ref=db.collection('orders').doc(),lim=db.doc('orderLimits/'+S.user.uid),code=S.coupon?S.coupon.code:null,total=tot(),discount=disc(sum());
+  let cid=(S.profile||{}).cid;if(!cid){cid=genCid();await db.doc('users/'+S.user.uid).set({cid},{merge:true});S.profile={...S.profile,cid}}
+  const customer={name:v('cN'),phone:v('cP'),phone2:v('cP2'),governorate:$('cG').value,city:v('cC'),address:v('cA'),district:v('cD'),email:S.user.email};
+  const ts=firebase.firestore.FieldValue.serverTimestamp(),ref=db.collection('orders').doc(),lim=db.doc('orderLimits/'+S.user.uid),code=S.coupon?S.coupon.code:null,total=tot(),discount=disc(sum()),openFee=feeAmt();
   /* ONE atomic step: burn the coupon + start the cool-down + create the order. If any part is refused, nothing is saved. */
   await db.runTransaction(async t=>{
    let cref=null;
-   if(code){cref=db.doc('coupons/'+code);const d=await t.get(cref);if(!d.exists||d.data().used||d.data().active===false)throw new Error('This coupon was already used')}
+   if(code){cref=db.doc('coupons/'+code);const d=await t.get(cref),x=d.exists?d.data():null;if(!x||x.used||x.active===false)throw new Error('This coupon was already used');if(x.forUid&&x.forUid!=S.user.uid)throw new Error('This coupon belongs to another account');if(x.expiresAt&&x.expiresAt.toMillis()<Date.now())throw new Error('This coupon has expired')}
    if(cref)t.update(cref,{used:true,usedBy:S.user.uid});
    t.set(lim,{at:ts});
-   t.set(ref,{uid:S.user.uid,customer,method:'cod',status:'pending',total,coupon:code,discount,items:S.cart.map(i=>({pid:i.pid,name:i.name,size:i.size,price:i.price,sku:i.sku||''})),createdAt:ts});
+   t.set(ref,{uid:S.user.uid,cid,customer,method:'instapay',status:'pending',total,coupon:code,discount,openFee,items:S.cart.map(i=>({pid:i.pid,name:i.name,size:i.size,price:i.price,sku:i.sku||''})),receipt:S.receipt,receiptHash:S.receiptHash,createdAt:ts});
   });
-  if(S.site.ejsKey)fetch('https://api.emailjs.com/api/v1.0/email/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_id:S.site.ejsService,template_id:S.site.ejsTemplate,user_id:S.site.ejsKey,template_params:{title:'New order - EGP '+total,name:customer.name,email:S.user.email,time:new Date().toLocaleString(),message:'Phones: '+customer.phone+' / '+customer.phone2+' | Address: '+customer.governorate+', '+customer.city+', '+customer.address+' | Items: '+S.cart.map(i=>i.name+szt(i.size)).join(', ')+' | Cash on hand: EGP '+total}})}).catch(()=>{});
-  S.cart=[];S.coupon=null;S.agreed=false;save();toast('Order placed - we will contact you to confirm');go('orders');
- }catch(x){toast(x.code=='permission-denied'?'We could not place this order. If you ordered in the last 10 minutes please wait a little, or contact us.':x.message,'e');$('cB').disabled=false}
+  if(S.site.ejsKey)fetch('https://api.emailjs.com/api/v1.0/email/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_id:S.site.ejsService,template_id:S.site.ejsTemplate,user_id:S.site.ejsKey,template_params:{title:'New PAID order (check receipt) - EGP '+total,name:customer.name,email:S.user.email,time:new Date().toLocaleString(),message:'Customer ID: '+cid+' | WhatsApp: '+customer.phone+' / Alt: '+customer.phone2+' | Address: '+customer.governorate+', '+customer.city+', '+customer.address+', District: '+customer.district+' | Items: '+S.cart.map(i=>i.name+szt(i.size)).join(', ')+' | Paid by InstaPay: EGP '+total}})}).catch(()=>{});
+  S.cart=[];S.coupon=null;S.agreed=false;S.receipt=null;S.receiptHash=null;S.co={};save();toast('Order placed - we are checking your payment / تم إرسال الطلب - نراجع الدفع الآن');go('orders');
+ }catch(x){toast(x.code=='permission-denied'?'We could not place this order. If you ordered in the last 10 minutes please wait a little, or the store may be closed. Contact us if it continues.':x.message,'e');$('cB').disabled=false}
 }
 
+async function setQr(e){const f=e.target.files[0];if(!f)return;try{const u=await up(f,'q',900,.92);if(u.length>650000)return toast('QR image is too large, please crop it to the QR only','e');await db.doc('settings/site').set({qrUrl:u},{merge:true});toast('QR saved')}catch(x){toast(x.message,'e')}}
+async function delQr(){if(!confirm('Remove the QR code?'))return;try{await db.doc('settings/site').update({qrUrl:firebase.firestore.FieldValue.delete()});toast('QR removed')}catch(x){toast(x.message,'e')}}
+function showQr(){if(S.site.qrUrl)showM(`<img src="${esc(S.site.qrUrl)}" class="w-full max-w-md mx-auto rounded-xl bg-white p-3" alt="InstaPay QR">`)}
 async function setSite(e,k,doc){const f=e.target.files[0];if(!f)return;try{const u=await up(f,'s',k=='qrUrl'?600:300);await db.doc('settings/'+doc).set({[k]:u},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
 async function saveProd(){
  const id=$('pId').value,old=S.products.find(p=>p.id==id),f=$('pI').files[0];
  try{
-  const d={name:$('pN').value.trim(),price:+$('pP').value,category:$('pC').value.trim(),zinkSKU:$('pS').value.trim(),description:$('pD').value.trim(),image:old?.image||''};
+  const d={name:$('pN').value.trim(),price:+$('pP').value,category:$('pC').value.trim(),zinkSKU:$('pS').value.trim(),description:$('pD').value.trim(),image:old?.image||'',discount:Math.min(90,Math.max(0,+$('pDisc').value||0)),...(old&&old.items?{items:old.items}:{})};
   if(!d.name||!d.price||!d.zinkSKU)return toast('Name, price and SKU are required','e');
   if(f)d.image=await up(f,'p',700);
   id?await db.doc('products/'+id).set(d):await db.collection('products').add(d);toast('Product saved')
  }catch(x){toast(x.message,'e')}
 }
-function editProd(id){const p=S.products.find(x=>x.id==id);$('pId').value=id;$('pN').value=p.name;$('pP').value=p.price;$('pC').value=p.category;$('pS').value=p.zinkSKU;$('pD').value=p.description;$('pT').textContent='Edit product';scrollTo(0,300)}
+function editProd(id){const p=S.products.find(x=>x.id==id);$('pId').value=id;$('pN').value=p.name;$('pP').value=p.price;$('pC').value=p.category;$('pS').value=p.zinkSKU;$('pD').value=p.description;$('pDisc').value=p.discount||'';$('pT').textContent='Edit product';scrollTo(0,300)}
 async function delProd(id){if(confirm('Delete this product?'))await db.doc('products/'+id).delete()}
 async function setStatus(id,v){try{await db.doc('orders/'+id).update({status:v});toast('Updated')}catch(x){toast(x.message,'e')}}
 
 function side(o){const sd=$('sd');if(!o){sd.classList.add('hidden');return}const b=(l,v)=>`<button class="w-full text-left py-3 border-b border-[#3B185F] text-sm uppercase tracking-widest" onclick="side(0);go('${v}')">${l}</button>`;
  $('sdb').innerHTML=`<div class="flex justify-between mb-4"><span class="cz g text-lg">MENU</span><button onclick="side(0)">✕</button></div>${b('Products','shop')}${b('About us','about')}${b('Account','account')}${S.user?b('My orders','orders'):''}${S.admin?b('Admin dashboard','admin'):''}${S.user?`<button class="btn2 w-full mt-6" onclick="side(0);auth.signOut()">Log out</button>`:`<button class="btn w-full mt-6" onclick="side(0);authOpen('in')">Sign in / Register</button>`}`;sd.classList.remove('hidden')}
-function about(){return `<h1 class="cz text-3xl g mb-6 text-center">ABOUT US</h1><div class="card p-8 max-w-3xl mx-auto text-sm text-gray-300 whitespace-pre-wrap">${S.site.about?esc(S.site.about):'Coming soon.'}</div>${nt()}`}
-function account(){const p=S.profile||{};return `<h1 class="cz text-3xl g mb-6">MY ACCOUNT</h1><div class="card p-6 max-w-xl space-y-3"><div class="text-xs text-gray-400">${esc(S.user.email)} ${S.admin?'<b class="text-pink-400">· Administrator</b>':''}</div>
- <div><label class="lb">Name</label><input id="uN" class="in" value="${esc(p.name)}"></div><div><label class="lb">Phone</label><input id="uP" class="in" value="${esc(p.phone)}"></div><div><label class="lb">Alternative phone</label><input id="uP2" class="in" value="${esc(p.phone2)}"></div>
- <div><label class="lb">Governorate</label><select id="uG" class="in">${govList().map(g=>`<option ${g==p.governorate?'selected':''}>${g}</option>`).join('')}</select></div>
- <div><label class="lb">City / District</label><input id="uC" class="in" value="${esc(p.city)}"></div><div><label class="lb">Address</label><textarea id="uA" rows="2" class="in">${esc(p.address)}</textarea></div>
+function about(){return `<h1 class="cz text-3xl g mb-6 text-center">ABOUT US</h1><div class="card p-8 max-w-3xl mx-auto text-sm text-gray-300 whitespace-pre-wrap">${S.site.about?esc(S.site.about):'Coming soon.'}${S.site.aboutAr?`<div dir="rtl" lang="ar" class="mt-3">${esc(S.site.aboutAr)}</div>`:''}</div>${nt()}`}
+function account(){const p=S.profile||{},now=Date.now();
+ const cps=(S.myCoupons||[]).map(c=>{const ex=c.expiresAt?c.expiresAt.toMillis():0,st=c.used?'Used':(ex&&ex<now?'Expired':'Available');return `<div class="flex justify-between items-center gap-2 border-t border-[#3B185F] py-2 text-sm"><span><b class="font-mono text-pink-400">${esc(c.id)}</b> · ${esc(c.value)}${c.type=='pct'?'%':' EGP'} off${ex?' · until '+new Date(ex).toLocaleDateString():''} · ${st}</span>${st=='Available'?`<button class="btn2" onclick="copyText('${esc(c.id)}')">Copy</button>`:''}</div>`}).join('');
+ return `<h1 class="cz text-3xl g mb-6">MY ACCOUNT</h1><div class="card p-6 max-w-xl space-y-3"><div class="text-xs text-gray-400">${esc(S.user.email)} ${S.admin?'<b class="text-pink-400">· Administrator</b>':''}</div>
+ <div class="text-sm">Customer ID: <b class="font-mono text-pink-400 select-text">${esc(p.cid||'-')}</b></div>
+ ${cps?`<div><div class="lb">My coupons</div>${cps}</div>`:''}
+ <div><label class="lb">Name · الاسم</label><input id="uN" class="in" value="${esc(p.name)}"></div><div><label class="lb">WhatsApp phone number · رقم الواتساب</label><input id="uP" class="in" value="${esc(p.phone)}"></div><div><label class="lb">Alternative phone · رقم هاتف بديل</label><input id="uP2" class="in" value="${esc(p.phone2)}"></div>
+ <div><label class="lb">Governorate · المحافظة</label><select id="uG" class="in">${govList().map(g=>`<option ${g==p.governorate?'selected':''}>${g}</option>`).join('')}</select></div>
+ <div><label class="lb">City · المدينة</label><input id="uC" class="in" value="${esc(p.city)}"></div><div><label class="lb">Address · العنوان</label><textarea id="uA" rows="2" class="in">${esc(p.address)}</textarea></div><div><label class="lb">District / neighborhood · الحي / المنطقة</label><input id="uD" class="in" value="${esc(p.district)}"></div>
  <button class="btn w-full py-3" onclick="saveAcc()">Save changes</button>${S.admin?`<button class="btn2 w-full" onclick="go('admin')">Open admin dashboard</button>`:''}
  <button class="btn2 w-full" onclick="auth.signOut()">Log out</button><button class="btn2 w-full text-red-400" onclick="delAcc()">Delete my account</button></div>`}
-async function saveAcc(){const d={name:$('uN').value.trim(),phone:$('uP').value.trim(),phone2:$('uP2').value.trim(),governorate:$('uG').value,city:$('uC').value.trim(),address:$('uA').value.trim()};if(!okPh(d.phone)||!okPh(d.phone2)||ph(d.phone)==ph(d.phone2))return toast('Enter two different valid phone numbers (main and alternative)','e');try{await db.doc('users/'+S.user.uid).set(d,{merge:true});S.profile={...S.profile,...d};toast('Saved')}catch(x){toast(x.message,'e')}}
+async function saveAcc(){const d={name:$('uN').value.trim(),phone:$('uP').value.trim(),phone2:$('uP2').value.trim(),governorate:$('uG').value,city:$('uC').value.trim(),address:$('uA').value.trim(),district:$('uD').value.trim()};if(!okMob(d.phone))return toast('Enter a valid Egyptian mobile number that has WhatsApp (01XXXXXXXXX) / أدخل رقم موبايل مصري صحيح عليه واتساب','e');if(!okPh(d.phone2)||ph(d.phone)==ph(d.phone2))return toast('Enter a different valid alternative phone number','e');try{await db.doc('users/'+S.user.uid).set(d,{merge:true});S.profile={...S.profile,...d};toast('Saved')}catch(x){toast(x.message,'e')}}
 async function delAcc(){if(!confirm('Delete your account permanently? This cannot be undone.'))return;try{await db.doc('users/'+S.user.uid).delete();await auth.currentUser.delete();toast('Account deleted')}catch(x){toast(x.code=='auth/requires-recent-login'?'For safety, sign out, sign in again, then delete':x.message,'e')}}
 async function rate(id,n){try{await db.doc('ratings/'+id+'_'+S.user.uid).set({pid:id,stars:n,uid:S.user.uid});toast('Thanks for rating!');openP(id)}catch(x){toast(x.message,'e')}}
 function showM(h){$('pmb').innerHTML='<button class="absolute top-3 right-4" onclick="$(\'pm\').classList.add(\'hidden\')">✕</button>'+h;$('pm').classList.remove('hidden')}
 function tilt(e,el){const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;el.style.transform=`perspective(800px) rotateY(${x*14}deg) rotateX(${-y*14}deg) scale(1.03)`}
-function openP(id){const p=S.products.find(x=>x.id==id);if(!p)return;showM(`<div class="grid md:grid-cols-2 gap-6 items-center"><div onmousemove="tilt(event,this)" onmouseleave="this.style.transform=''" style="transition:transform .1s">${im(p.image,'w-full rounded-xl')}</div><div class="space-y-3"><h2 class="cz text-2xl text-white">${esc(p.name)}</h2><p class="cz text-pink-400 text-xl">EGP ${(+p.price).toLocaleString()}</p><p class="text-sm text-gray-300">${esc(p.description)}</p>${rt(p.id)}${canRate(p.id)?`<div class="text-xs text-gray-400">Rate this product: ${[1,2,3,4,5].map(n=>`<button class="text-2xl text-pink-400" onclick="rate('${p.id}',${n})">${n<=myRate(p.id)?'★':'☆'}</button>`).join('')}</div>`:''}${p.items&&p.items.length?`<p class="text-xs text-gray-400">Includes: ${p.items.map(i=>esc((S.products.find(x=>x.id==i)||{}).name)).join(', ')}</p>`:''}${pick(p,'ps')}<button class="btn w-full py-3" onclick="addCart('${p.id}'${noSize(p)?'':`,$('ps').value`});$('pm').classList.add('hidden')">Add to bag</button></div></div>`)}
-async function applyCoupon(){const c=$('cc').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(!c)return;try{const d=await db.doc('coupons/'+c).get();if(!d.exists||!d.data().active||d.data().used)return toast('Invalid coupon','e');S.coupon={code:c,...d.data()};toast('Coupon applied');render()}catch(x){toast('Invalid coupon','e')}}
+function openP(id){const p=S.products.find(x=>x.id==id);if(!p)return;showM(`<div class="grid md:grid-cols-2 gap-6 items-center"><div onmousemove="tilt(event,this)" onmouseleave="this.style.transform=''" style="transition:transform .1s">${im(p.image,'w-full rounded-xl')}</div><div class="space-y-3"><h2 class="cz text-2xl text-white">${esc(p.name)}</h2><p class="cz text-pink-400 text-xl">${+p.discount>0?'<s class="text-gray-500 text-sm mr-1">EGP '+(+p.price).toLocaleString()+'</s>':''}EGP ${eff(p).toLocaleString()}</p><p class="text-sm text-gray-300">${esc(p.description)}</p>${rt(p.id)}${canRate(p.id)?`<div class="text-xs text-gray-400">Rate this product: ${[1,2,3,4,5].map(n=>`<button class="text-2xl text-pink-400" onclick="rate('${p.id}',${n})">${n<=myRate(p.id)?'★':'☆'}</button>`).join('')}</div>`:''}${p.items&&p.items.length?`<p class="text-xs text-gray-400">Includes: ${p.items.map(i=>esc((S.products.find(x=>x.id==i)||{}).name)).join(', ')}</p>`:''}${pick(p,'ps')}<button class="btn w-full py-3" onclick="addCart('${p.id}'${noSize(p)?'':`,$('ps').value`});$('pm').classList.add('hidden')">Add to bag</button></div></div>`)}
+async function applyCoupon(){const c=$('cc').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(!c)return;try{const d=await db.doc('coupons/'+c).get();if(!d.exists||!d.data().active||d.data().used)return toast('Invalid coupon','e');const x=d.data();if(x.forUid&&x.forUid!=S.user.uid)return toast('This coupon belongs to another account','e');if(x.expiresAt&&x.expiresAt.toMillis()<Date.now())return toast('This coupon has expired','e');S.coupon={code:c,...x};toast('Coupon applied');render()}catch(x){toast('Invalid coupon','e')}}
 async function addCoupon(){
- const val=+$('kV').value,type=$('kT').value;
+ const val=+$('kV').value,type=$('kT').value,days=+$('kD').value,cidIn=$('kU').value.trim().toUpperCase();
  if(!val||val<1)return toast('Enter the discount value','e');
  if(type=='pct'&&val>100)return toast('Percent must be between 1 and 100','e');
+ if(!days||days<1)return toast('Enter how many days the coupon is valid','e');
  const gen=()=>'BAH-'+[...crypto.getRandomValues(new Uint8Array(8))].map(n=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[n%32]).join('');
  try{
+  let forUid=null;
+  if(cidIn){const q=await db.collection('users').where('cid','==',cidIn).limit(1).get();if(q.empty)return toast('No customer found with ID '+cidIn,'e');forUid=q.docs[0].id}
   let c;
-  await db.runTransaction(async t=>{c=gen();const r=db.doc('coupons/'+c);if((await t.get(r)).exists)throw new Error('Code clash, please press Generate again');t.set(r,{type,value:val,active:true,used:false,createdAt:firebase.firestore.FieldValue.serverTimestamp()})});
-  toast('Coupon created: '+c);prompt('Copy this one-time code:',c)
+  await db.runTransaction(async t=>{c=gen();const r=db.doc('coupons/'+c);if((await t.get(r)).exists)throw new Error('Code clash, please press Generate again');t.set(r,{type,value:val,active:true,used:false,expiresAt:firebase.firestore.Timestamp.fromMillis(Date.now()+days*864e5),...(forUid?{forUid,forCid:cidIn}:{}),createdAt:firebase.firestore.FieldValue.serverTimestamp()})});
+  toast('Coupon created: '+c);prompt(forUid?'Coupon sent to '+cidIn+'. Code:':'Copy this one-time code:',c)
  }catch(x){toast(x.message,'e')}
 }
 async function delCoupon(c){if(confirm('Delete coupon?'))await db.doc('coupons/'+c).delete()}
-async function saveSite(){const u=$('sVid').value.trim(),m=u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);try{await db.doc('settings/site').set({about:$('sAbout').value,insta:$('sInsta').value.trim(),yt:$('sYt').value.trim(),tt:$('sTt').value.trim(),notes:$('sNotes').value,wa:$('sWa').value.replace(/\D/g,''),legal:$('sLegal').value,maxOrder:+$('sMax').value||0,ejsService:$('sE1').value.trim(),ejsTemplate:$('sE2').value.trim(),ejsKey:$('sE3').value.trim(),video:{id:m?m[1]:'',url:u,start:+$('sVs').value||0,end:+$('sVe').value||0}},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
+async function saveSite(){const u=$('sVid').value.trim(),m=u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);try{await db.doc('settings/site').set({about:$('sAbout').value,aboutAr:$('sAboutAr').value,notesAr:$('sNotesAr').value,legalAr:$('sLegalAr').value,insta:$('sInsta').value.trim(),yt:$('sYt').value.trim(),tt:$('sTt').value.trim(),notes:$('sNotes').value,wa:$('sWa').value.replace(/\D/g,''),legal:$('sLegal').value,maxOrder:+$('sMax').value||0,ejsService:$('sE1').value.trim(),ejsTemplate:$('sE2').value.trim(),ejsKey:$('sE3').value.trim(),video:{id:m?m[1]:'',url:u,start:+$('sVs').value||0,end:+$('sVe').value||0}},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
 async function saveBundle(){const f=$('bI').files[0],items=[...document.querySelectorAll('.bc:checked')].map(c=>c.value);if(!$('bN').value.trim()||!+$('bP').value||items.length<2)return toast('Name, price and at least 2 products needed','e');try{await db.collection('products').add({name:$('bN').value.trim(),price:+$('bP').value,category:'Bundle',description:$('bD').value.trim(),zinkSKU:'',items,image:f?await up(f,'p',700):''});toast('Bundle saved')}catch(x){toast(x.message,'e')}}
 async function saveGovs(){const g=[...document.querySelectorAll('.gv:checked')].map(c=>c.value);try{await db.doc('settings/site').set({govs:g},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
-function copyAddr(id){const o=S.orders.find(x=>x.id==id),c=o.customer;navigator.clipboard.writeText(c.name+'\n'+c.phone+'\n'+c.governorate+', '+c.city+', '+c.address).then(()=>toast('Copied'))}
+function copyAddr(id){const o=S.orders.find(x=>x.id==id),c=o.customer;navigator.clipboard.writeText(c.name+'\n'+c.phone+(c.phone2?' / '+c.phone2:'')+'\n'+c.governorate+', '+c.city+', '+c.address+(c.district?', '+c.district:'')).then(()=>toast('Copied'))}
 async function secDone(){try{await db.doc('settings/site').set({secDone:Date.now()},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
 async function blockUser(u){if(!confirm('Block this customer from placing orders?'))return;try{await db.doc('blocked/'+u).set({at:Date.now()});toast('Blocked')}catch(x){toast(x.message,'e')}}
 async function setShip(id){const t=prompt('Tracking number or courier note (optional)');if(t===null)return;try{await db.doc('orders/'+id).update({status:'shipped',tracking:t.trim()});toast('Updated')}catch(x){toast(x.message,'e')}}
@@ -319,30 +379,70 @@ async function unlockAdmin(){
 async function lockAdmin(){try{await db.doc('adminSessions/'+S.user.uid).delete()}catch(e){}S.unlocked=false;startData();go('shop')}
 async function cancelOrder(id){if(!confirm('Cancel this order?'))return;try{await db.doc('orders/'+id).update({status:'cancelled'});toast('Order cancelled')}catch(x){toast(x.code=='permission-denied'?'This order can no longer be cancelled. Please contact us.':x.message,'e')}}
 function copyText(t){navigator.clipboard.writeText(t).then(()=>toast('Copied'))}
-function showTerms(){showM('<h3 class="cz g text-xl mb-3">Terms &amp; policies</h3><p class="text-sm whitespace-pre-wrap">'+esc(S.site.legal)+'</p>')}
+function showTerms(){showM(termsHtml())}
 
 function copyOrder(id){const o=S.orders.find(x=>x.id==id),c=o.customer;
- const L=['Order '+o.id,'Name: '+c.name,'Phone: '+c.phone,'Alt phone: '+c.phone2,'Address: '+c.governorate+', '+c.city+', '+c.address,'','Items:',...o.items.map(i=>'- '+i.name+(i.size?' ('+i.size+')':'')+(i.sku?' | SKU '+i.sku:'')+' | EGP '+i.price)];
+ const L=['Order '+ordNo(o)+' ('+o.id+')','Customer ID: '+(o.cid||'-'),'Name: '+c.name,'WhatsApp: '+c.phone,'Alt phone: '+c.phone2,'Address: '+c.governorate+', '+c.city+', '+c.address,'District: '+(c.district||'-'),'','Items:',...o.items.map(i=>'- '+i.name+(i.size?' ('+i.size+')':'')+(i.sku?' | SKU '+i.sku:'')+' | EGP '+i.price)];
  if(o.coupon)L.push('Coupon '+o.coupon+': -EGP '+(o.discount||0));
- L.push('','Cash to collect: EGP '+o.total);
+ if(o.openFee)L.push('Open package fee: EGP '+o.openFee);
+ L.push('','Paid by InstaPay: EGP '+o.total);
  navigator.clipboard.writeText(L.join('\n')).then(()=>toast('Order copied'))}
+async function forgotPw(){const e=$('aEmail').value.trim();if(!e)return toast('Type your email above first / اكتب بريدك الإلكتروني أولًا','e');try{await auth.sendPasswordResetEmail(e);toast('Password reset email sent. Check your inbox and spam folder. / تم إرسال رابط إعادة تعيين كلمة المرور، تحقق من البريد والرسائل غير المرغوبة.')}catch(x){toast(x.message,'e')}}
+async function savePay(){try{await db.doc('settings/site').set({openTime:$('hO').value,closeTime:$('hC').value,days:[...document.querySelectorAll('.hd:checked')].map(c=>+c.value),closed:$('hX').checked,instaIpa:$('pIp').value.trim(),instaPhone:$('pPh').value.trim(),deliveryWindow:$('pDw').value.trim(),openFee:$('pOf').value===''?10:Math.max(0,+$('pOf').value)},{merge:true});toast('Saved')}catch(x){toast(x.message,'e')}}
+function viewReceipt(id){const o=S.orders.find(x=>x.id==id);if(o&&o.receipt)showM(`<img src="${esc(o.receipt)}" class="w-full rounded-xl" alt="Receipt">`)}
+function adminOrders(){
+ const q=(S.oq||'').trim().toLowerCase(),L=S.orders.filter(o=>!q||[o.id,o.cid,o.customer.name,o.customer.phone,o.customer.phone2,o.customer.district,o.customer.city,o.coupon].join(' ').toLowerCase().includes(q));
+ return L.map(o=>{const c=o.customer,dup=S.orders.filter(x=>x.id!=o.id&&x.receiptHash&&x.receiptHash==o.receiptHash),ref=S.orders.filter(x=>x.uid==o.uid&&x.status=='refused').length,e=expect(o);
+ return `<div class="p-4 rounded-xl bg-black/40 border border-[#3B185F] text-sm space-y-1">
+  <div class="flex justify-between flex-wrap gap-2"><span class="font-mono text-xs text-pink-400 select-text">${ordNo(o)} · ${o.id}</span><span class="text-xs">${LBL[o.status]||o.status}</span></div>
+  <div class="select-text"><b>${esc(c.name)}</b> · ID <span class="font-mono text-pink-400">${esc(o.cid||'-')}</span> · ${when(o)}${ref?` <b class="text-red-400">⚠ ${ref} refused order(s) before</b>`:''} <button class="btn2 ml-2 text-red-400" onclick="blockUser('${o.uid}')">Block customer</button></div>
+  <div class="text-xs text-gray-300 select-text">WhatsApp ${esc(c.phone)} · Alt ${esc(c.phone2)}</div>
+  <div class="text-xs text-gray-400 select-text">${esc(c.governorate)}, ${esc(c.city)}, ${esc(c.address)} · District: ${esc(c.district||'-')} <button class="btn2 ml-2" onclick="copyAddr('${o.id}')">Copy delivery details</button> <button class="btn2 ml-1" onclick="copyOrder('${o.id}')">Copy full order</button></div>
+  <div>Paid by InstaPay: <b class="text-pink-400">EGP ${(+o.total).toLocaleString()}</b>${o.coupon?' · coupon '+esc(o.coupon):''}${o.openFee?' · open package +EGP '+esc(o.openFee):''}${e!==null&&Math.abs(e-o.total)>1?` <b class="text-red-400">⚠ differs from current prices (EGP ${e}) - double-check</b>`:''}</div>
+  ${dup.length?`<div class="text-xs text-red-400">⚠ Same receipt image as order ${dup.map(ordNo).join(', ')}</div>`:''}
+  ${o.receipt?`<img src="${esc(o.receipt)}" class="h-28 rounded-lg border border-[#3B185F] cursor-pointer" onclick="viewReceipt('${o.id}')" title="Click to enlarge" alt="Receipt">`:''}
+  <div class="text-xs text-gray-300 select-text">${o.items.map(i=>'• '+esc(i.name)+(i.size?' ('+esc(i.size)+')':'')+(i.sku?' · SKU '+esc(i.sku):'')+' · EGP '+esc(i.price)).join('<br>')}</div>
+  ${o.status=='pending'?`<div class="flex gap-2 pt-1"><button class="btn" onclick="setStatus('${o.id}','approved')">Payment received - approve</button><button class="btn2 text-red-400" onclick="if(confirm('Payment not found / not valid? Reject this order.'))setStatus('${o.id}','rejected')">Reject</button></div>`:''}
+  ${o.status=='approved'?`<div class="pt-1"><p class="text-xs text-gray-400 mb-1">Now place this order in your Zink Print dashboard, then mark it:</p><button class="btn" onclick="setStatus('${o.id}','sent_to_zink')">Mark as sent to Zink Print</button></div>`:''}
+  ${o.status=='sent_to_zink'?`<div class="pt-1"><button class="btn" onclick="setShip('${o.id}')">Mark shipped (add tracking)</button></div>`:''}
+  ${o.status=='shipped'?`<div class="pt-1 text-xs text-gray-400">Tracking: ${esc(o.tracking)} <button class="btn ml-2" onclick="setStatus('${o.id}','delivered')">Mark delivered</button> <button class="btn2 text-red-400" onclick="setStatus('${o.id}','refused')">Customer refused</button></div>`:''}
+  ${o.status=='delivered'?`<div class="pt-1"><button class="btn2 text-red-400" onclick="if(confirm('Mark this order as returned?'))setStatus('${o.id}','returned')">Mark returned</button></div>`:''}
+  </div>`}).join('')||'<p class="text-gray-500 text-sm">No orders found.</p>'}
+
+function termsHtml(){
+ const w=esc(S.site.deliveryWindow||'5-10 working days'),f=S.site.openFee==null?10:+S.site.openFee;
+ return `<div class="max-h-[60vh] overflow-y-auto pr-2 space-y-5">
+ <div class="text-sm text-gray-300 space-y-3"><h3 class="cz g text-xl">Returns &amp; Replacements Policy</h3>
+ <p><b class="text-white">Custom Orders:</b> All items at By A Hand are custom-printed specifically for you when you order. Because of this, we cannot accept returns, exchanges, or refunds for change of mind or incorrect product/model selections. Please double-check your options before ordering!</p>
+ <p><b class="text-white">Damaged or Defective Items:</b> If your order arrives damaged, defective, or if you received the wrong item, please contact us within 48 hours of delivery with clear photos of the issue.</p>
+ <p><b class="text-white">Resolutions:</b> Once verified, we will arrange a replacement for you at no extra cost.</p>
+ <p><b class="text-white">Payment protection:</b> You pay by InstaPay before we start, and your order only starts after we confirm your payment. If your order does not arrive within the agreed delivery time, or it arrives damaged, defective or wrong and you send clear photo evidence, we will make it right: a free replacement, or a refund if we cannot replace it.</p>
+ <p><b class="text-white">Delivery time:</b> Your order will arrive within <b>${w}</b> after we confirm your payment. By agreeing you accept this delivery time.</p>
+ <p><b class="text-white">Check before you order:</b> Please make sure you selected the right items, sizes and phone model. If you chose wrong there is no take-back.</p>
+ <p><b class="text-white">Open package:</b> If you want to open the package before receiving it, add EGP ${f} at checkout.</p>
+ <p><b class="text-white">WhatsApp:</b> Please enter a phone number that has WhatsApp. We confirm your order and contact you about delivery there.</p>
+ <p>By pressing Agree you accept these terms.</p></div>
+ <hr class="border-[#3B185F]">
+ <div dir="rtl" lang="ar" class="text-sm text-gray-300 space-y-3 text-right"><h3 class="text-xl font-bold g">سياسة الإرجاع والاستبدال</h3>
+ <p><b class="text-white">الطلبات المخصصة:</b> جميع منتجات By A Hand تُطبع خصيصًا لك عند الطلب. ولهذا لا يمكننا قبول الإرجاع أو الاستبدال أو استرداد المبلغ في حالة تغيير الرأي أو اختيار منتج/موديل خاطئ. يرجى مراجعة اختياراتك جيدًا قبل إتمام الطلب!</p>
+ <p><b class="text-white">المنتجات التالفة أو المعيبة:</b> إذا وصل طلبك تالفًا أو معيبًا، أو إذا استلمت منتجًا خاطئًا، يرجى التواصل معنا خلال 48 ساعة من الاستلام مع صور واضحة للمشكلة.</p>
+ <p><b class="text-white">الحلول:</b> بعد التحقق، سنرتب لك استبدال المنتج دون أي تكلفة إضافية.</p>
+ <p><b class="text-white">حماية الدفع:</b> تدفع عبر إنستاباي قبل أن نبدأ، ولا يبدأ تنفيذ طلبك إلا بعد تأكيدنا استلام الدفع. إذا لم يصل طلبك خلال مدة التوصيل المتفق عليها، أو وصل تالفًا أو معيبًا أو خاطئًا مع إرسال صور واضحة كدليل، فسنحل المشكلة: استبدال مجاني، أو استرداد المبلغ إذا تعذر الاستبدال.</p>
+ <p><b class="text-white">مدة التوصيل:</b> سيصل طلبك خلال <b>${w}</b> من تأكيد الدفع. بموافقتك فإنك تقبل هذه المدة.</p>
+ <p><b class="text-white">راجع اختياراتك:</b> تأكد من اختيار المنتجات والمقاسات وموديل الهاتف الصحيح. في حالة الاختيار الخاطئ لا يمكن الإرجاع أو الاستبدال.</p>
+ <p><b class="text-white">فتح الطرد:</b> إذا رغبت في فتح الطرد قبل الاستلام، أضف ${f} جنيهًا مصريًا عند إتمام الطلب.</p>
+ <p><b class="text-white">واتساب:</b> يرجى إدخال رقم هاتف عليه واتساب، فنحن نؤكد طلبك ونتواصل معك بشأن التوصيل من خلاله.</p>
+ <p>بالضغط على "أوافق" فإنك توافق على هذه الشروط.</p></div>
+ ${S.site.legal?`<hr class="border-[#3B185F]"><p class="text-sm text-gray-300 whitespace-pre-wrap">${esc(S.site.legal)}</p>`:''}${S.site.legalAr?`<p dir="rtl" lang="ar" class="text-sm text-gray-300 whitespace-pre-wrap text-right">${esc(S.site.legalAr)}</p>`:''}</div>`}
 function policyGate(){
  if(!S.user){go('checkout');return}
  if(!S.cart.length)return;
+ if(!needOpen())return;
  $('cart').classList.add('hidden');
- showM(`<h3 class="cz g text-xl mb-3">Returns &amp; Replacements Policy</h3>
- <div class="text-sm text-gray-300 space-y-3">
- <p><b class="text-white">Custom Orders:</b> All items at By A Hand are custom-printed specifically for you when you order. Because of this, we cannot accept returns, exchanges, or refunds for change of mind or incorrect product/model selections. Please double-check your options before ordering!</p>
- <p><b class="text-white">Damaged or Defective Items:</b> If your order arrives damaged, defective, or if you received the wrong item, please contact us within 48 hours of delivery with clear photos of the issue.</p>
- <p><b class="text-white">Resolutions:</b> Once verified, we will arrange a replacement for you at no extra cost.</p></div>
- <hr class="my-5 border-[#3B185F]">
- <div dir="rtl" lang="ar" class="text-sm text-gray-300 space-y-3 text-right"><h3 class="text-xl font-bold g mb-3">سياسة الإرجاع والاستبدال</h3>
- <p><b class="text-white">الطلبات المخصصة:</b> جميع منتجات By A Hand تُطبع خصيصًا لك عند الطلب. ولهذا لا يمكننا قبول الإرجاع أو الاستبدال أو استرداد المبلغ في حالة تغيير الرأي أو اختيار منتج/موديل خاطئ. يرجى مراجعة اختياراتك جيدًا قبل إتمام الطلب!</p>
- <p><b class="text-white">المنتجات التالفة أو المعيبة:</b> إذا وصل طلبك تالفًا أو معيبًا، أو إذا استلمت منتجًا خاطئًا، يرجى التواصل معنا خلال 48 ساعة من الاستلام مع صور واضحة للمشكلة.</p>
- <p><b class="text-white">الحلول:</b> بعد التحقق، سنرتب لك استبدال المنتج دون أي تكلفة إضافية.</p></div>
- <button class="btn w-full py-3 mt-5" onclick="agreePolicy()">Agree · أوافق</button>`)}
+ showM(termsHtml()+`<button class="btn w-full py-3 mt-5" onclick="agreePolicy()">Agree · أوافق</button>`)}
 function agreePolicy(){S.agreed=true;$('pm').classList.add('hidden');go('checkout')}
 
 $('mdl').innerHTML=MODELS.map(m=>`<option value="${esc(m)}">`).join('');
 render();
+setInterval(()=>{if(isOpen()!==wasOpen)render()},20000);
 </script></body></html>
